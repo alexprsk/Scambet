@@ -1,16 +1,26 @@
-# This is a sample Python script.
+from fastapi import FastAPI
+from routers import auth
+from sqlmodel import SQLModel
+from database import engine
+from contextlib import asynccontextmanager
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create all database tables on startup
+    SQLModel.metadata.create_all(engine)
+    print("Database tables created")
+    yield
+    # Clean up on shutdown if needed
+    print("Shutting down")
 
+app = FastAPI(lifespan=lifespan)
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+@app.get("/")
+async def home_page():
+    return {"Message": "Welcome to ScamBet"}
 
+app.include_router(auth.router)
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
