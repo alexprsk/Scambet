@@ -22,11 +22,14 @@ class Users(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     username: str = Field(index=True, unique=True)
     email: str = Field(index=True, unique=True)
-    password_hash: str
+    hashed_password: str
     first_name: str = Field(index=True)
     last_name: str = Field(index=True)
+    phone_number: str | None = Field()
     age: int | None = Field(default=None, index=True)
-    balance: float  
+    balance: float 
+    is_active: bool | None = Field(default=True)
+    role : str 
     created_at: datetime = Field(default=datetime.now(timezone.utc))
     updated_at: datetime = Field(default=datetime.now(timezone.utc), sa_column_kwargs={"onupdate": datetime.now(timezone.utc)})
 
