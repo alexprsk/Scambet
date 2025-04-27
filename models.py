@@ -19,6 +19,7 @@ class Test(SQLModel, table=True):
 
 
 class Users(SQLModel, table=True):
+
     id: int = Field(default=None, primary_key=True)
     username: str = Field(index=True, unique=True)
     email: str = Field(index=True, unique=True)
@@ -35,7 +36,10 @@ class Users(SQLModel, table=True):
 
 
 
+
+
 class Bets(SQLModel, table=True):
+    
     id: int | None = Field(default=None, primary_key=True)
     user_id: int | None = Field(foreign_key="users.id", index=True)
     market: int | None
