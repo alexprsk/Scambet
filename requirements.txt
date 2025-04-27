@@ -16,4 +16,4 @@ python-jose[cryptography]
 python-multipart
 typing
 uvicorn
-enum
+
