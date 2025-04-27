@@ -1,42 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import jwt, JWTError
-from pydantic import BaseModel, Field
-from sqlmodel import Session 
+from schemas import CreateUserRequest, Token
+from functions import create_access_token, authenticate_user
 from database import SessionLocal
+from models import Users
+
+from sqlmodel import Session 
 from sqlmodel import select
 from typing import Annotated
-from models import Test, Users
+
+from jose import jwt
 from passlib.hash import pbkdf2_sha256
 from datetime import datetime, timedelta, timezone
+
 
 router = APIRouter(
     prefix='/auth',
     tags=['auth'])
-
-
-
-#################### PYDANTIC ####################
-
-
-
-class CreateTest(BaseModel):
-    type: str
-
-class CreateUserRequest(BaseModel):
-    username: str
-    email: str
-    first_name: str
-    last_name: str
-    password: str 
-    phone_number: str = Field(min_length=7, max_length=15, pattern=r'^\+?\d{7,15}$')
-    is_active : bool = Field(default=True)
-    role: str = Field(default='user')
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
 
 
 def get_db():
@@ -46,8 +26,8 @@ def get_db():
     finally:
         db.close()
 
-db_dependency = Annotated[Session, Depends(get_db)]
 
+db_dependency = Annotated[Session, Depends(get_db)]
 
 SECRET_KEY = '939a99c39bf3dc73316bb5fd52c2195a596485c21cdb7cce1151c1a41dde32df'
 ALGORITHM = 'HS256'
@@ -147,36 +127,3 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
 
     return {'access_token': token, 'token_type': 'bearer'}
 
-
-
-
-
-    
-
-
-
-######## test endpoint ########
-
-@router.post("/test", status_code=status.HTTP_201_CREATED)
-async def create_test(db: db_dependency, request: CreateTest):
-    # Check if test type exists
-    existing = db.exec(select(Test).where(Test.type == request.type)).first()
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Test type already exists"
-        )
-    
-    # Create new test
-    test = Test(type=request.type)
-    db.add(test)
-    db.commit()
-    db.refresh(test)
-    
-    return {
-        "message": "Test created successfully",
-        "data": {
-            "id": test.id,
-            "type": test.type
-        }
-    }
