@@ -117,6 +117,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
             console.log('Login successful:', data);
 
+            document.cookie = `access_token=${encodeURIComponent(data.access_token)}; Path=/; SameSite=Strict; Secure; Max-Age=${60 * 60 * 4}`;
+            
+
+            sessionStorage.setItem('User_id', data.user_id);
+
+
             loginModal.classList.add('hidden');
             loginForm.reset();
             alert('Login successful!');
