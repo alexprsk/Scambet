@@ -1,82 +1,126 @@
-//Registration
-
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('registrationModal');
+document.addEventListener('DOMContentLoaded', function () {
+    // Registration Elements
+    const registrationModal = document.getElementById('registrationModal');
     const registerBtn = document.getElementById('registerBtn');
-    const closeBtn = document.getElementById('closeBtn');
+    const regFormCloseBtn = document.getElementById('regFormCloseBtn');
     const registrationForm = document.getElementById('registrationForm');
 
-    // Open modal when button is clicked
-    registerBtn.addEventListener('click', function() {
-        modal.classList.remove('hidden');
-    });
-    
-    // Close modal with X button
-    closeBtn.addEventListener('click', function() {
-        modal.classList.add('hidden');
+    // Login Elements
+    const loginModal = document.getElementById('loginModal');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginFormCloseBtn = document.getElementById('loginFormCloseBtn');
+    const loginForm = document.getElementById('loginForm');
+
+    // Open registration modal
+    registerBtn.addEventListener('click', function () {
+        registrationModal.classList.remove('hidden');
     });
 
-    // Close modal when clicking outside
-    window.addEventListener('click', function(event) {
-        if (event.target === modal) {
-            modal.classList.add('hidden');
+    // Close registration modal via X
+    regFormCloseBtn.addEventListener('click', function () {
+        registrationModal.classList.add('hidden');
+    });
+
+    // Close registration modal when clicking outside
+    window.addEventListener('click', function (event) {
+        if (event.target === registrationModal) {
+            registrationModal.classList.add('hidden');
         }
-    }); // <-- This parenthesis was missing in your code
+    });
 
-    // Form submission handler
-    registrationForm.addEventListener('submit', async function(event) {
+    // Registration form submission
+    registrationForm.addEventListener('submit', async function (event) {
         event.preventDefault();
-        
-        // Get form values
-        const username = document.getElementById('userName').value;
+
+        const registrationUsername = document.getElementById('registrationUsername').value;
         const firstName = document.getElementById('firstName').value;
         const lastName = document.getElementById('lastName').value;
         const email = document.getElementById('email').value;
         const phoneNumber = document.getElementById('phoneNumber').value;
-        const password = document.getElementById('password').value;
-        
-
-        //Send form data
+        const registrationPassword = document.getElementById('registrationPassword').value;
 
         try {
-
             const response = await fetch('/auth/sign-up', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    username: username,
+                    username: registrationUsername,
                     first_name: firstName,
                     last_name: lastName,
                     email: email,
                     phone_number: phoneNumber,
-                    password: password
+                    password: registrationPassword
                 })
-
             });
-            
-            console.log(response)
+
             if (!response.ok) {
                 throw new Error('Registration failed');
             }
-    
+
             const data = await response.json();
             console.log('Registration successful:', data);
-            
-            // Close modal
-            modal.classList.add('hidden');
-            
-            // Reset form
+
+            registrationModal.classList.add('hidden');
             registrationForm.reset();
-    
-            // Show success message to user
             alert('Registration successful!');
-        
         } catch (error) {
             console.error('Registration error:', error);
             alert('Registration failed. Please try again.');
         }
     });
 
+    // Open login modal
+    loginBtn.addEventListener('click', function () {
+        loginModal.classList.remove('hidden');
+    });
+
+    // Close login modal via X
+    loginFormCloseBtn.addEventListener('click', function () {
+        loginModal.classList.add('hidden');
+    });
+
+    // Close login modal when clicking outside
+    window.addEventListener('click', function (event) {
+        if (event.target === loginModal) {
+            loginModal.classList.add('hidden');
+        }
+    });
+
+    // Login form submission
+    loginForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const loginUsername = document.getElementById('loginUsername').value;
+        const loginPassword = document.getElementById('loginPassword').value;
+
+        try {
+            const response = await fetch('/auth/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: loginUsername,
+                    password: loginPassword
+                })
+            });
+            console.log(response.body)
+
+            if (!response.ok) {
+                throw new Error('Login failed');
+            }
+
+            const data = await response.json();
+            console.log('Login successful:', data);
+
+            loginModal.classList.add('hidden');
+            loginForm.reset();
+            alert('Login successful!');
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('Login failed. Please try again.');
+        }
+    });
 });
