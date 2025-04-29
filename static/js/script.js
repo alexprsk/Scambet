@@ -99,14 +99,16 @@ document.addEventListener('DOMContentLoaded', function () {
             const response = await fetch('/auth/token', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: JSON.stringify({
-                    username: loginUsername,
-                    password: loginPassword
+                body: new URLSearchParams({
+                    'username': loginUsername,
+                    'password': loginPassword,
+                    'grant_type': 'password'
                 })
             });
-            console.log(response.body)
+
+
 
             if (!response.ok) {
                 throw new Error('Login failed');
