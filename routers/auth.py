@@ -157,7 +157,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
 
  
     token = create_access_token(user.username, user.id, user.role, timedelta(hours=4))
-    print(form_data)
+    print(token)
     return {'access_token': token, 'user_id': user.id, 'token_type': 'bearer', "expires_in": 14400}
 
 

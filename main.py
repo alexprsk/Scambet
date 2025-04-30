@@ -1,11 +1,17 @@
 from fastapi import FastAPI, Request
+import uvicorn
 from routers import auth
+from funds import routers, models, schema
 from sqlmodel import SQLModel
 from database import engine
 from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+
+import time
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,7 +26,11 @@ app = FastAPI(lifespan=lifespan)
 
 
 templates = Jinja2Templates(directory="templates")
+
 app.mount("/static", StaticFiles(directory="./static"), name="static")
+
+
+
 
 @app.get("/")
 async def home_page(request: Request):
@@ -30,6 +40,7 @@ async def home_page(request: Request):
 
 
 app.include_router(auth.router)
+app.include_router(routers.router)
 
 
 
