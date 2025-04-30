@@ -8,8 +8,10 @@
   <title>ScamBet</title>
   <link rel="icon" href="static/favicon.ico" type="image/x-icon">
 </head>
-<body>
-  <nav class="bg-gray-700">
+
+<body class="bg-gradient-to-r from-indigo-900 to-teal-600">
+  
+  <nav class="bg-gradient-to-r from-indigo-900 to-teal-600">
     <div class="relative flex h-16 items-center justify-between">
       <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
         <!-- Mobile menu button-->
@@ -42,13 +44,13 @@
         <button type="button" id="userAuthenticatedBalance" class="hidden bg-transparent hover:bg-transparent text-white py-2 px-4 rounded transition duration-300">
           <p>0.00</p>
         </button>
-        <button type="button" id="registerBtn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+        <button type="button" id="registerBtn" class="bg-white hover:bg-gray-300 text-black font-bold py-2 px-4 rounded transition duration-300">
           Register
         </button>
-        <button type="button" id="loginBtn" class="bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+        <button type="button" id="loginBtn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-300">
           Login
         </button>
-        <button type="button" id="logoutBtn" class="hidden bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+        <button type="button" id="logoutBtn" class="hidden bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-300">
           Logout
         </button>
       </div>
@@ -59,11 +61,38 @@
   <div class="relative min-h-screen flex flex-col">
   
     <!-- Main Content Area -->
-    <main class="flex-1 container mx-auto px-4 mt-4">
+    <div class="flex-1 container mx-auto px-4 mt-4 w-full">
       <!-- Your main page content will go here -->
-      <h1 class="text-2xl font-bold mb-4">Welcome to ScamBet!</h1>
-      <p>This is where your games, matches, odds, etc., will be displayed.</p>
-    </main>
+      <div class="flex flex-col">
+        <!-- Carousel -->
+        <div class="carousel_card w-full m-8 h-56 flex flex-row rounded-xl">
+          <div class="flex-1">
+            <img src="static/ming.png" class="w-full h-full object-cover rounded-xl"></div>
+          <div class="flex-1 ml-3"><img src="static/image_400x400.jpg" class="w-full h-full object-cover rounded-xl"></div>
+          <div class="flex-1 ml-3"> <img src="static/ming.png" class="w-full h-full object-cover rounded-xl"></div>
+          <div class="flex-1 ml-3"> <img src="static/image_400x400.jpg" class="w-full h-full object-cover rounded-xl"></div>
+          <div class="flex-1 ml-3"> <img src="static/ming.png" class="w-full h-full object-cover rounded-xl"></div>
+          
+          
+        </div>
+          <!-- Markets Container -->
+        <div>
+          <div class="markets container w-full rounded-xl">
+            <div class="markets_card m-8 h-96 flex flex-col bg-gray-300  bg-white w-full">
+              <p class="text-white rounded-md"><strong>Markets</strong></p>
+              <div class="flex-1 bg-gray-300 mb-px ">01</div>
+              <div class="flex-1 bg-gray-300 mb-px">02</div>
+              <div class="flex-1 bg-gray-300 mb-px">03</div>
+              <div class="flex-1 bg-gray-300 mb-px">04</div>
+              <div class="flex-1 bg-gray-300">03</div>
+            </div>
+          </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
   
     <!-- Footer -->
     <footer class="bg-gray-800 text-white text-center p-4">
