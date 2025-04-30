@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const loginBtn = document.getElementById('loginBtn');
     const loginFormCloseBtn = document.getElementById('loginFormCloseBtn');
     const loginForm = document.getElementById('loginForm');
+    const userAuthenticatedBalance = document.getElementById('userAuthenticatedBalance')
+    const logoutBtn = document.getElementById('logoutBtn');
 
     // Open registration modal
     registerBtn.addEventListener('click', function () {
@@ -94,8 +96,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const loginUsername = document.getElementById('loginUsername').value;
         const loginPassword = document.getElementById('loginPassword').value;
+        
 
         try {
+            
             const response = await fetch('/auth/token', {
                 method: 'POST',
                 headers: {
@@ -111,24 +115,71 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             if (!response.ok) {
-                throw new Error('Login failed');
+                const errorData = await response.json();
+                console.error('Error details:', errorData);
+                throw new Error(errorData.detail || 'Login failed');
             }
 
             const data = await response.json();
             console.log('Login successful:', data);
 
             document.cookie = `access_token=${encodeURIComponent(data.access_token)}; Path=/; SameSite=Strict; Secure; Max-Age=${60 * 60 * 4}`;
-            
 
             sessionStorage.setItem('User_id', data.user_id);
 
+            updateAuthUI();
+
 
             loginModal.classList.add('hidden');
+            logoutBtn.classList.remove('hidden');
+            loginBtn.classList.add('hidden');
             loginForm.reset();
             alert('Login successful!');
         } catch (error) {
             console.error('Login error:', error);
-            alert('Login failed. Please try again.');
+            alert(`Login failed: ${error.message}`);
         }
     });
+
+    //Logout
+
+    function updateAuthUI(){
+
+        const isLoggedIn = document.cookie.includes('access_token');
+        userAuthenticatedBalance.classList.toggle('hidden', !isLoggedIn)
+        logoutBtn.classList.toggle('hidden', !isLoggedIn);
+        loginBtn.classList.toggle('hidden', isLoggedIn);
+        registerBtn.classList.toggle('hidden', isLoggedIn);
+
+
+    }
+
+    updateAuthUI();
+
+    logoutBtn.addEventListener('click', async function() {
+        try {
+            // Clear client-side authentication data
+            document.cookie = 'access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Secure; SameSite=Strict';
+            sessionStorage.removeItem('User_id');
+            
+            // Optional: Call backend logout endpoint if you want server-side token invalidation
+            await fetch('/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+    
+            // Update UI
+            updateAuthUI();
+            alert('Logged out successfully!');
+            
+            // Optional: Redirect to home page
+            window.location.href = '/';
+        } catch (error) {
+            console.error('Logout failed:', error);
+            alert('Logout failed. Please try again.');
+        }
+    });
+    
+
+    
 });

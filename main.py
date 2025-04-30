@@ -28,7 +28,10 @@ async def home_page(request: Request):
         return templates.TemplateResponse(
         request=request, name="home.html")
 
+
 app.include_router(auth.router)
+
+
 
 if __name__ == '__main__':
     import uvicorn
