@@ -42,7 +42,7 @@ def get_current_user(token = Annotated[str, Depends(oauth2_bearer)]):
     try:
 
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        print(payload)
+
         username = payload.get('sub')
         user_id = payload.get('id')
         user_role = payload.get('role')
@@ -60,18 +60,35 @@ def get_current_user(token = Annotated[str, Depends(oauth2_bearer)]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
     
 db_dependency = Annotated[Session, Depends(get_db)]
-user_dependency = Annotated[str, Depends(get_current_user)]
+user_dependency = Annotated[dict, Depends(get_current_user)]
+
 
 
 @router.get('/', status_code=status.HTTP_200_OK)
-async def get_user_funds(db:db_dependency, user:user_dependency, request: Request):
-
-    try:
-        token = request.cookies.get("access_token")
-
-        user_balance = db.exec(select(Users.balance).where(Users.id == user.id))
-
-        return {'user_balance': user_balance}
+async def get_user_funds(db: db_dependency, token: Annotated[str, Depends(oauth2_bearer)]):
     
-    except Exception as e:
-        print(e)
+
+    user = get_current_user(token)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
+    
+    # Get the full user object
+    user_data = db.exec(select(Users).where(Users.id == user['user_id'])).first()
+    
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return {'user_balance': user_data.balance}
+
+@router.put('/edit_amount/{user_id}', status_code=status.HTTP_200_OK)
+async def edit_amount(db:db_dependency, user_id : str, request: Request):
+    pass
+
+
+
+
+
