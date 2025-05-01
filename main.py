@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 import uvicorn
 from routers import auth
-from funds import routers, models, schema
+from funds import routers, models, schemas
 from sqlmodel import SQLModel
 from database import engine
 from contextlib import asynccontextmanager

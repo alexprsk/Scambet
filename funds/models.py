@@ -42,6 +42,7 @@ class Funds(SQLModel, table=True):
     reason: TransactionReason = Field(default=None)
     created_at: datetime = Field(default=datetime.now(timezone.utc))
 
+
 class Transactions(SQLModel, table=True):
     transaction_id: UUID = Field(
         default_factory=uuid4,
@@ -51,7 +52,7 @@ class Transactions(SQLModel, table=True):
     player_id: str = Field(foreign_key="users.id", index=True)
     type: TransactionType
     amount: float
-    status: TransactionStatus  # Now using proper Enum
+    status: TransactionStatus  
     reference_id: str | None = None
     created_at: datetime = Field(default=datetime.now(timezone.utc))
     

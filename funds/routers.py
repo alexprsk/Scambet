@@ -1,17 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from schemas import CreateUserRequest, Token
+from funds.schemas import DepositRequest, WithdrawRequest
+from funds.models import  Funds, Transactions
 from routers.auth import Users
 from database import SessionLocal
 
 
 from sqlmodel import Session 
-from sqlmodel import select, update
+from sqlmodel import select, update, insert, values
 from typing import Annotated
 
 from jose import jwt, JWTError
 from passlib.hash import pbkdf2_sha256
 from datetime import datetime, timedelta, timezone
+from uuid import UUID, uuid4
 
 
 router = APIRouter(
@@ -64,6 +66,17 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 
+def get_funds(db: db_dependency, user_id: int) -> float:
+
+    user = db.exec(select(Users).where(Users.id == user_id)).first()
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return user.balance
+
+
+
 @router.get('/', status_code=status.HTTP_200_OK)
 async def get_user_funds(db: db_dependency, token: Annotated[str, Depends(oauth2_bearer)]):
     
@@ -86,8 +99,154 @@ async def get_user_funds(db: db_dependency, token: Annotated[str, Depends(oauth2
 
 
 
+
+
+
+
+
+@router.post('/deposit', status_code=status.HTTP_200_OK)
+async def deposit(db:db_dependency, request: DepositRequest, token: Annotated[str, Depends(oauth2_bearer)]):
+
+    if request.amount <= 0:
+                raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Deposit amount must be positive"
+        )
+
+    try:
+        user = get_current_user(token)
+
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid user credentials"
+            )        
+        user_id = user['user_id']
+        current_balance = get_funds(db, user_id)
+        print(current_balance)
+
+
+        new_balance = current_balance + request.amount
+        change_amount = request.amount
+
+
+        # Start Transaction on Funds Table
+
+
+        #Update User Balace
+        db.exec(update(Users).where(Users.id == user_id).values(balance = new_balance))
+
+        #Create New Funds Record
+
+        new_funds = Funds(
+            player_id=user_id,
+            previous_balance=current_balance,
+            new_balance=new_balance,
+            change_amount=change_amount,
+            transaction_id=uuid4(),
+            reason='deposit'
+        )
+        db.add(new_funds)
+        db.commit()
+        
+        return {
+            "message": "Deposit successful",
+            "new_balance": new_balance,
+            "transaction_id": str(new_funds.transaction_id)
+        }
+
+
+
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Deposit failed: {str(e)}"
+        )        
+
+
+
+@router.post('/withdraw', status_code=status.HTTP_200_OK)
+async def withdraw(db:db_dependency, request: WithdrawRequest, token: Annotated[str, Depends(oauth2_bearer)]):
+
+    if request.amount <= 0:
+                raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Deposit amount must be positive"
+        )
+    
+    
+
+    try:
+        user = get_current_user(token)
+
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid user credentials"
+            )        
+        user_id = user['user_id']
+        current_balance = get_funds(db, user_id)
+
+        if request.amount > current_balance:
+             raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail="Insufficient balance to perform this operation")
+
+
+
+        new_balance = current_balance - request.amount
+        change_amount = (-request.amount)
+
+
+        # Start Transaction on Funds Table
+
+
+        #Update User Balace
+        db.exec(update(Users).where(Users.id == user_id).values(balance = new_balance))
+
+        #Create New Funds Record
+
+        new_funds = Funds(
+            player_id=user_id,
+            previous_balance=current_balance,
+            new_balance=new_balance,
+            change_amount=change_amount,
+            transaction_id=uuid4(),
+            reason='withdrawal'
+        )
+        db.add(new_funds)
+        db.commit()
+        
+        return {
+            "message": "Deposit successful",
+            "new_balance": new_balance,
+            "transaction_id": str(new_funds.transaction_id)
+        }
+
+
+
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+
+
+
+
+
+
+########### TEST ENDPOINTS ##########
+
 @router.put('/edit_amount/{user_id}', status_code=status.HTTP_200_OK)
 async def edit_amount(db:db_dependency, user_id : int, new_balance: float, request: Request):
+    
     
     update_balance = db.exec(update(Users).where(Users.id == user_id).values(balance = new_balance))
 
@@ -97,21 +256,9 @@ async def edit_amount(db:db_dependency, user_id : int, new_balance: float, reque
     db.commit()
 
 
-@router.put('/edit_amount/{user_id}', status_code=status.HTTP_200_OK)
-async def edit_amount(db:db_dependency, user_id : int, new_balance: float, request: Request):
-    
-    update_balance = db.exec(update(Users).where(Users.id == user_id).values(balance = new_balance))
-
-    if update_balance.rowcount == 0:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    
-    db.commit()
 
 
-    
+@router.get('/history/{user_id}', status_code=status.HTTP_200_OK)
+async def get_user_all_funds(db: db_dependency, user_id: int):
 
-
-
-
-
-
+    return db.exec(select(Funds).where(Users.id == user_id)).all()
