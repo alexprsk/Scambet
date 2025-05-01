@@ -192,7 +192,7 @@ async def withdraw(db:db_dependency, request: WithdrawRequest, token: Annotated[
         current_balance = get_funds(db, user_id)
 
         if request.amount > current_balance:
-             raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail="Insufficient balance to perform this operation")
+             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient balance to perform this operation")
 
 
 
