@@ -6,7 +6,7 @@ from database import SessionLocal
 
 
 from sqlmodel import Session 
-from sqlmodel import select
+from sqlmodel import select, update
 from typing import Annotated
 
 from jose import jwt, JWTError
@@ -84,9 +84,32 @@ async def get_user_funds(db: db_dependency, token: Annotated[str, Depends(oauth2
     
     return {'user_balance': user_data.balance}
 
+
+
 @router.put('/edit_amount/{user_id}', status_code=status.HTTP_200_OK)
-async def edit_amount(db:db_dependency, user_id : str, request: Request):
-    pass
+async def edit_amount(db:db_dependency, user_id : int, new_balance: float, request: Request):
+    
+    update_balance = db.exec(update(Users).where(Users.id == user_id).values(balance = new_balance))
+
+    if update_balance.rowcount == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    db.commit()
+
+
+@router.put('/edit_amount/{user_id}', status_code=status.HTTP_200_OK)
+async def edit_amount(db:db_dependency, user_id : int, new_balance: float, request: Request):
+    
+    update_balance = db.exec(update(Users).where(Users.id == user_id).values(balance = new_balance))
+
+    if update_balance.rowcount == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    db.commit()
+
+
+    
+
 
 
 
