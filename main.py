@@ -1,55 +1,46 @@
-from fastapi import FastAPI, Request
-import uvicorn
-from auth.routers import router as auth_router
-from funds.routers import router as funds_router
-from sportsbook.routers import router as sportsbook_router
-from sqlmodel import SQLModel
-from database import engine
 from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
-from dotenv import load_dotenv
+from sqlmodel import SQLModel
 import os
 
+from database import engine
+from auth.routers import router as auth_router
+from funds.routers import router as funds_router
+from sportsbook.routers import router as sportsbook_router
 
-
-import time
-
-load_dotenv()
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Create all database tables on startup
-    SQLModel.metadata.create_all(engine)
-    print("Database tables created")
-    yield
-    # Clean up on shutdown if needed
-    print("Shutting down")
-
-app = FastAPI(lifespan=lifespan)
 
 
 templates = Jinja2Templates(directory="templates")
 
-app.mount("/static", StaticFiles(directory="./static"), name="static")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize DB and other resources on startup."""
+    SQLModel.metadata.create_all(engine)
+    print("Database tables created")
+    yield
+    print("Shutting down")
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 
-
-@app.get("/")
-async def home_page(request: Request):
-        
-        return templates.TemplateResponse(
-        request=request, name="home.html")
-
-
+app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(auth_router)
-app.include_router(sportsbook_router)
 app.include_router(funds_router)
+app.include_router(sportsbook_router)
 
 
+@app.get("/", response_class=HTMLResponse)
+async def home_page(request: Request):
+    """Render the home page."""
+    return templates.TemplateResponse("home.html", {"request": request})
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
