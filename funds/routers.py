@@ -14,7 +14,8 @@ from jose import jwt, JWTError
 from passlib.hash import pbkdf2_sha256
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
-
+from dotenv import load_dotenv
+import os
 
 router = APIRouter(
     prefix='/funds',

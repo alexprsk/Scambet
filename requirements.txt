@@ -14,7 +14,10 @@ pytest
 pytest-asyncio
 python-jose[cryptography]
 python-multipart
+python-dotenv
 typing
 uvicorn
+os
+requests
 
 
