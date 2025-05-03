@@ -1,21 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from funds.schemas import DepositRequest, WithdrawRequest
-from funds.models import  Funds, Transactions
-from auth.routers import Users
-from database import SessionLocal
-
-
-from sqlmodel import Session 
-from sqlmodel import select, update, insert, values
+import os
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
+from uuid import UUID, uuid4
 
+
+from dotenv import load_dotenv
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from passlib.hash import pbkdf2_sha256
-from datetime import datetime, timedelta, timezone
-from uuid import UUID, uuid4
-from dotenv import load_dotenv
-import os
+from sqlmodel import Session, select, update, insert, values
+
+
+from auth.models import Users
+from database import SessionLocal
+from funds.models import Funds, Transactions
+from funds.schemas import DepositRequest, WithdrawRequest
+
+
 
 router = APIRouter(
     prefix='/funds',
