@@ -2,17 +2,21 @@ from fastapi import FastAPI, Request
 import uvicorn
 from auth.routers import router as auth_router
 from funds.routers import router as funds_router
-#from sportsbook.routers import router as sportsbook_router
+from sportsbook.routers import router as sportsbook_router
 from sqlmodel import SQLModel
 from database import engine
 from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from dotenv import load_dotenv
+import os
+
+
 
 import time
 
-
+load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,7 +45,7 @@ async def home_page(request: Request):
 
 
 app.include_router(auth_router)
-
+app.include_router(sportsbook_router)
 app.include_router(funds_router)
 
 
