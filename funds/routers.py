@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from funds.schemas import DepositRequest, WithdrawRequest
 from funds.models import  Funds, Transactions
-from routers.auth import Users
+from auth.routers import Users
 from database import SessionLocal
 
 
@@ -96,10 +96,6 @@ async def get_user_funds(db: db_dependency, token: Annotated[str, Depends(oauth2
         )
     
     return {'user_balance': user_data.balance}
-
-
-
-
 
 
 

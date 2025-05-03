@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Request
 import uvicorn
-from routers import auth
-from funds import routers, models, schemas
+from auth.routers import router as auth_router
+from funds.routers import router as funds_router
+#from sportsbook.routers import router as sportsbook_router
 from sqlmodel import SQLModel
 from database import engine
 from contextlib import asynccontextmanager
@@ -39,8 +40,9 @@ async def home_page(request: Request):
         request=request, name="home.html")
 
 
-app.include_router(auth.router)
-app.include_router(routers.router)
+app.include_router(auth_router)
+
+app.include_router(funds_router)
 
 
 

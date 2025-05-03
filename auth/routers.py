@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from schemas import CreateUserRequest, Token
+from auth.schemas import CreateUserRequest, Token
 from functions import create_access_token, authenticate_user
 from database import SessionLocal
-from models import Users
+from auth.models import Users
 
 from sqlmodel import Session 
 from sqlmodel import select

@@ -1,4 +1,4 @@
-from models import Users
+from auth.models import Users
 from passlib.hash import pbkdf2_sha256
 from datetime import datetime, timedelta, timezone
 from jose import jwt
