@@ -4,10 +4,8 @@ from sqlmodel import Field,SQLModel
 from enum import Enum
 from uuid import UUID, uuid4
 
-from datetime import datetime, timezone
-from enum import Enum
-from uuid import UUID, uuid4
-from sqlmodel import Field, SQLModel
+
+
 
 # ---- Enums ----
 class TransactionReason(str, Enum):
@@ -34,7 +32,7 @@ class TransactionType(str, Enum):
 # ---- Tables ----
 class Funds(SQLModel, table=True):
     movement_id: int = Field(default=None, primary_key=True)
-    player_id: str = Field(index=True, foreign_key="users.id")
+    player_id: int = Field(index=True, foreign_key="users.id")
     previous_balance: float 
     new_balance: float
     change_amount: float
@@ -49,7 +47,7 @@ class Transactions(SQLModel, table=True):
         primary_key=True,
         index=True
     )
-    player_id: str = Field(foreign_key="users.id", index=True)
+    player_id: int = Field(foreign_key="users.id", index=True)
     type: TransactionType
     amount: float
     status: TransactionStatus  
