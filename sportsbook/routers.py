@@ -58,12 +58,34 @@ def insert_games_in_db(response, db):
             bookmaker = BookMakers(key = bookmaker_data["key"],
             title = bookmaker_data["title"],
             last_update = bookmaker_data["last_update"],
-            event_id = game_data["id"]
+            event_id=event.id
             )
 
-        db.add(bookmaker)
-        db.commit()
+            db.add(bookmaker)
+            db.commit()
 
+            for market_data in bookmaker_data["markets"]:
+
+                market = Markets(
+                    key = market_data["key"],
+                    last_update= market_data["last_update"],
+                    bookmaker_id=bookmaker.id
+                )
+
+                db.add(market)
+                db.commit()
+
+                for outcomes_data in market_data["outcomes"]:
+
+                    outcomes = Outcomes(
+                        name = outcomes_data["name"],
+                        price = outcomes_data["price"],
+                        event_id=event.id,
+                        market_id=market.id
+                    )
+                    
+                    db.add(outcomes)
+                    db.commit()
 
 
 
