@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from sqlmodel import Field, SQLModel, Column, DateTime
 
@@ -28,3 +28,4 @@ class OddsSnapshot(SQLModel, table=True):
     outcome_team: str
     position: str
     outcome_price: float
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

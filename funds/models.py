@@ -38,9 +38,8 @@ class Funds(SQLModel, table=True):
     change_amount: float
     transaction_id: UUID = Field(foreign_key="transactions.transaction_id") 
     reason: TransactionReason = Field(default=None)
-    created_at: datetime = Field(default=datetime.now(timezone.utc))
-
-
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
 class Transactions(SQLModel, table=True):
     transaction_id: UUID = Field(
         default_factory=uuid4,
@@ -52,5 +51,4 @@ class Transactions(SQLModel, table=True):
     amount: float
     status: TransactionStatus  
     reference_id: str | None = None
-    created_at: datetime = Field(default=datetime.now(timezone.utc))
-    
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

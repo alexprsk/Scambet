@@ -30,9 +30,8 @@ class Users(SQLModel, table=True):
     balance: float 
     is_active: bool | None = Field(default=True)
     role : str 
-    created_at: datetime = Field(default=datetime.now(timezone.utc))
-    updated_at: datetime = Field(default=datetime.now(timezone.utc), sa_column_kwargs={"onupdate": datetime.now(timezone.utc)})
-
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), sa_column_kwargs={"onupdate": datetime.now(timezone.utc)})
 
 
 

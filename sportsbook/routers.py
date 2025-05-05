@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
-from database import SessionLocal, Session
+from database import SessionLocal
+from sqlmodel import Session, select, update, insert, values, desc
 from typing import Optional, Annotated
 from dotenv import load_dotenv
 import httpx, os
@@ -162,6 +163,22 @@ async def get_odds_by_sport(db: db_dependency,
             insert_games_in_db(request.json(), db)
         
         return request.json()
+    
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unexpected error: {str(e)}")
+    
+
+    
+
+@router.get('/odds/prelive_latest', status_code=status.HTTP_200_OK)
+async def get_prelive_odds(db:db_dependency):
+
+    try:
+        response = db.exec(select(OddsSnapshot).order_by(OddsSnapshot.created_at.desc())).all()
+
+        if response is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Response was empty")
+        return response
     
     except httpx.RequestError as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unexpected error: {str(e)}")
