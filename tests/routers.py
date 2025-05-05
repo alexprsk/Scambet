@@ -6,17 +6,18 @@ from dotenv import load_dotenv
 import httpx, os
 import random
 
-from sportsbook.models import Events, OddsSnapshot
-from utilities.random_odds import random_odds_generator
+from tests.models import TestEvents, TestOddsSnapshot
+from utilities.random_odds import random_odds_generator, event_odds
 
 router = APIRouter(
-    prefix= "/sportsbook",
-     tags=['sportsbook']
+    prefix= "/tests",
+     tags=['tests']
 )
 
 load_dotenv()
 
 odds_api_key=os.getenv("ODDS_API_KEY")
+
 
 
 
@@ -49,7 +50,7 @@ def insert_games_in_db(response, db):
 
     for game_data in response:
 
-        event = Events(
+        event = TestEvents(
 
             event_id = game_data["id"],
             sport_key = game_data["sport_key"],
@@ -90,7 +91,7 @@ def insert_games_in_db(response, db):
                             position = "Draw"
 
 
-                        odds_snapshot = OddsSnapshot(
+                        odds_snapshot = TestOddsSnapshot(
                         event_id=event.id,
                         bookmaker_key=bookmaker_data["key"],
                         bookmaker_title=bookmaker_data["title"],
@@ -110,87 +111,18 @@ def insert_games_in_db(response, db):
 #-----------------------------------------#
 
 
-@router.get('/sports', status_code=status.HTTP_200_OK)
-async def get_all_sports():
+    
 
+@router.get('/test/latest_odds', status_code=status.HTTP_200_OK)
+async def get_latest_test_odds(db: db_dependency):
 
-    url = f"https://api.the-odds-api.com/v4/sports/?apiKey={odds_api_key}"
-
-    api_key_check(odds_api_key, url)
 
     try:
-        async with httpx.AsyncClient() as client:
-            request= await client.get(url)
-
-            if request.status_code != 200:
-                raise HTTPException(status_code=request.status_code, detail= request.text)
-            
-
-        return request.json()
-    
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unexpected error: {str(e)}")
-    
-
-
-
-@router.get('/events', status_code=status.HTTP_200_OK)
-async def get_events_by_sport(sport: str = Query(description="soccer_england_league2")):
-
-
-    url = f"https://api.the-odds-api.com/v4/sports/{sport}/events/?apiKey={odds_api_key}"
-
-    api_key_check(odds_api_key, url)
-
-    try:
-        async with httpx.AsyncClient() as client:
-
-            request = await client.get(url)
-
-        return request.json()
-    
-    except httpx.RequestError as e:
-        raise Exception(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unexpected error: {str(e)}")
-    
-
-
-
-@router.get('/odds', status_code=status.HTTP_200_OK)
-async def get_odds_by_sport(db: db_dependency,
-    sport: str = Query(default="soccer_england_league2"),
-    regions: str = Query(default="eu", description="eu,us"), 
-    markets: str = Query(default="h2h", description="h2h, spreads, totals")
-    ):
-
-
-    url = f"https://api.the-odds-api.com/v4/sports/{sport}/odds/?apiKey={odds_api_key}&regions={regions}&markets={markets}"
-
-    api_key_check(odds_api_key, url)
-
-    try:
-        async with httpx.AsyncClient() as client:
-
-            request = await client.get(url)
-            insert_games_in_db(request.json(), db)
+        response = random_odds_generator(event_odds)
         
-        return request.json()
-    
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unexpected error: {str(e)}")
-    
+        insert_games_in_db(response, db)
 
-    
+    except Exception as e:
+        return (f"An error occured while trying to write to db")
 
-@router.get('/odds/prelive_latest', status_code=status.HTTP_200_OK)
-async def get_prelive_odds(db:db_dependency):
-
-    try:
-        response = db.exec(select(OddsSnapshot).order_by(OddsSnapshot.created_at.desc())).all()
-
-        if response is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Response was empty")
-        return response
-    
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unexpected error: {str(e)}")
     

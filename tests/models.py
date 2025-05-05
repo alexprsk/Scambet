@@ -2,7 +2,9 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from sqlmodel import Field, SQLModel, Column, DateTime
 
-class Events(SQLModel, table=True):
+class TestEvents(SQLModel, table=True):
+    __tablename__ = "testevents"
+
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     event_id: str = Field(index=True)
     sport_key: str 
@@ -12,7 +14,10 @@ class Events(SQLModel, table=True):
     away_team: str
 
 
-class OddsSnapshot(SQLModel, table=True):
+
+class TestOddsSnapshot(SQLModel, table=True):
+    __tablename__ = "testoddssnapshot"
+
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     event_id: UUID = Field(foreign_key="events.id")
 
