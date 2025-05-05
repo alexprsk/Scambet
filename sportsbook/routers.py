@@ -4,7 +4,7 @@ from typing import Optional, Annotated
 from dotenv import load_dotenv
 import httpx, os
 
-from sportsbook.models import Events, BookMakers, Markets, Outcomes
+from sportsbook.models import Events, OddsSnapshot
 
 
 router = APIRouter(
@@ -35,6 +35,8 @@ def api_key_check(odds_api_key, url):
             )
         
 
+
+
 def insert_games_in_db(response, db):
 
     for game_data in response:
@@ -51,43 +53,48 @@ def insert_games_in_db(response, db):
         )
 
         db.add(event)
-        db.commit()
+        db.flush()
 
         for bookmaker_data in game_data["bookmakers"]:
 
-            bookmaker = BookMakers(key = bookmaker_data["key"],
-            title = bookmaker_data["title"],
-            last_update = bookmaker_data["last_update"],
-            event_id=event.id
-            )
+            if bookmaker_data["key"] in ["pinnacle", "sport888"]:
 
-            db.add(bookmaker)
-            db.commit()
+                for market_data in bookmaker_data["markets"]:
 
-            for market_data in bookmaker_data["markets"]:
+                    for outcomes_data in market_data["outcomes"]:
+                        
+                        outcome_team = outcomes_data["name"]
+                        position = ""
 
-                market = Markets(
-                    key = market_data["key"],
-                    last_update= market_data["last_update"],
-                    bookmaker_id=bookmaker.id
-                )
+                        if outcome_team == event.home_team:
+                            
+                            outcome_team = event.home_team
+                            position = "Home"
 
-                db.add(market)
-                db.commit()
+                        elif outcome_team == event.away_team:
 
-                for outcomes_data in market_data["outcomes"]:
+                            outcome_team = event.away_team
+                            position = "Away"
+                        
+                        elif outcome_team == "Draw":
+                            
+                            outcome_team = "Draw"
+                            position = "Draw"
 
-                    outcomes = Outcomes(
-                        name = outcomes_data["name"],
-                        price = outcomes_data["price"],
+
+                        odds_snapshot = OddsSnapshot(
                         event_id=event.id,
-                        market_id=market.id
+                        bookmaker_key=bookmaker_data["key"],
+                        bookmaker_title=bookmaker_data["title"],
+                        market_key=market_data["key"],
+                        market_last_update=market_data["last_update"],
+                        outcome_team=outcome_team,
+                        position = position,
+                        outcome_price=outcomes_data["price"]
                     )
-                    
-                    db.add(outcomes)
-                    db.commit()
+                        db.add(odds_snapshot)
 
-
+        db.commit()
 
 
 
@@ -116,7 +123,7 @@ async def get_all_sports():
 
 
 @router.get('/events', status_code=status.HTTP_200_OK)
-async def get_events_by_sport(sport: str):
+async def get_events_by_sport(sport: str = Query(description="soccer_england_league2")):
 
 
     url = f"https://api.the-odds-api.com/v4/sports/{sport}/events/?apiKey={odds_api_key}"
@@ -158,3 +165,4 @@ async def get_odds_by_sport(db: db_dependency,
     
     except httpx.RequestError as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unexpected error: {str(e)}")
+    

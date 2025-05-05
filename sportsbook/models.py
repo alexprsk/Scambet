@@ -11,24 +11,20 @@ class Events(SQLModel, table=True):
     home_team: str
     away_team: str
 
-class BookMakers(SQLModel, table=True):
-    id: UUID = Field(default_factory=uuid4, primary_key=True) 
-    key: str
-    title: str
-    last_update: datetime = Field(index=True)
-    event_id: UUID = Field(foreign_key="events.id")  
 
-class Markets(SQLModel, table=True):
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
-    key: str
-    bookmaker_id: UUID = Field(foreign_key="bookmakers.id")  
-    last_update: datetime = Field(index=True)
-
-
-class Outcomes(SQLModel, table=True):
+class OddsSnapshot(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     event_id: UUID = Field(foreign_key="events.id")
-    market_id: UUID = Field(foreign_key="markets.id")
-    name: str
-    price: float
 
+    # Bookmaker info
+    bookmaker_key: str
+    bookmaker_title: str
+
+    # Market info
+    market_key: str
+    market_last_update: datetime = Field(index=True)
+
+    # Outcome info
+    outcome_team: str
+    position: str
+    outcome_price: float
