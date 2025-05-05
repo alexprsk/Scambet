@@ -1,8 +1,10 @@
+let odd_1 = document.getElementById("odd_1")
+
 
 async function getEventOdds() {
 
     try {
-        const response = await fetch('/sportsbook/odds', {method: 'GET'})
+        const response = await fetch('tests/test/latest_odds', {method: 'GET'})
 
         if (!response.ok) {
             const errorData = await response.json();
@@ -11,8 +13,8 @@ async function getEventOdds() {
         }
 
         const data = await response.json();
-        console.log(data);
-
+        odd_1.textContent = data[0].bookmakers[0].markets[0].outcomes.find(outcome => outcome.name === "Notts County").price;
+        
     }catch(error){
         console.error('Login error:', error);
     }
