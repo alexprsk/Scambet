@@ -14,7 +14,7 @@ class Events(SQLModel, table=True):
 
 class OddsSnapshot(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    event_id: UUID = Field(foreign_key="events.id")
+    event_id: str = Field(index=True)
 
     # Bookmaker info
     bookmaker_key: str

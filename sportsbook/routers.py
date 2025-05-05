@@ -7,6 +7,7 @@ import httpx, os
 import random
 
 from sportsbook.models import Events, OddsSnapshot
+from tests.models import TestOddsSnapshot
 from utilities.random_odds import random_odds_generator
 
 router = APIRouter(
@@ -185,7 +186,7 @@ async def get_odds_by_sport(db: db_dependency,
 async def get_prelive_odds(db:db_dependency):
 
     try:
-        response = db.exec(select(OddsSnapshot).order_by(OddsSnapshot.created_at.desc())).all()
+        response = db.exec(select(TestOddsSnapshot).order_by(TestOddsSnapshot.created_at.desc())).all()
 
         if response is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Response was empty")

@@ -102,6 +102,7 @@ def insert_games_in_db(response, db):
                         outcome_price=outcomes_data["price"]
                     )
                         db.add(odds_snapshot)
+                        db.flush()
 
         db.commit()
 
@@ -122,7 +123,8 @@ async def get_latest_test_odds(db: db_dependency):
         
         insert_games_in_db(response, db)
 
-    except Exception as e:
-        return (f"An error occured while trying to write to db")
+        return "Latest data inserted in db"
 
-    
+    except Exception as e:
+        return (f"An error occured while trying to write to db:{e}")
+
