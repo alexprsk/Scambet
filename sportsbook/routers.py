@@ -18,6 +18,12 @@ load_dotenv()
 odds_api_key=os.getenv("ODDS_API_KEY")
 
 
+
+#-----------------------------------------#
+#--------------- FUNCTIONS ---------------#
+#-----------------------------------------#
+
+
 def get_db():
     db = SessionLocal()
     try:
@@ -97,6 +103,10 @@ def insert_games_in_db(response, db):
 
         db.commit()
 
+
+#-----------------------------------------#
+#--------------- ENDPOINTS ---------------#
+#-----------------------------------------#
 
 
 @router.get('/sports', status_code=status.HTTP_200_OK)
