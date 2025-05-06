@@ -11,11 +11,6 @@ class BetStatus(str, Enum):
     CANCELED = "canceled"
 
 
-class Test(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    type: str = Field(unique=True)
-
-
 
 class Users(SQLModel, table=True):
 
