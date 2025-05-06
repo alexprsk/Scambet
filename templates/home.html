@@ -136,8 +136,8 @@
       <!-- Markets Container -->
       <div class="events_outside_container relative">
         <div
-          class="events_container m-8 h-96 flex flex-col bg-gradient-to-r from-indigo-700 to-teal-700 rounded-md z-10">
-          <div class="events_card h-96 flex flex-col bg-inherit rounded-md">
+          class="events_container m-8 h-full flex flex-col bg-gradient-to-r from-indigo-700 to-teal-700 rounded-md z-10">
+          <div class="events_card  flex-1 flex-col bg-inherit rounded-md bg-blue-800" id="events_card">
             <div class="events_Type flex-row flex bg-inherit rounded-md h-8 mb-2 border-b border-b-solid border-b-gray-500">
               <div class="text_svg flex-1 flex">
                 <p class="text-white rounded-md flex "><strong>Pre-Live Markets</strong></p>
@@ -160,29 +160,101 @@
               </div>
             </div>
 
-            <div class="event_row flex-row flex bg-inherit hover:bg-indigo-500 mb-px cursor-pointer rounded-md">
-              <div class="event_timer flex  items-center justify-start pl-1 text-white">22:50
+            <div class="event_row flex-row flex bg-inherit hover:bg-indigo-500 mb-3 cursor-pointer rounded-md">
+              <div class="event_timer flex  items-center justify-start pl-1 mr-1 text-white text-sm">22:50
               </div>
               <div class="event_teams flex flex-col flex-1  ml-1 pl-2 items-left justify-start">
-                <div class="event_teams_home_1  flex text-white" id="event_teams_home_1">Dortmund</div>
-                <div class="event_teams_away_2 flex text-white" id="event_teams_away_2">Wokfsburg</div>
+                <div class="event_teams_home_1  flex text-white text-sm" id="event_teams_home_1">Dortmund</div>
+                <div class="event_teams_away_2 flex text-white text-sm" id="event_teams_away_2">Wokfsburg</div>
               </div>
               <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
                 <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
-                  <div role="button" id="odd_0" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">1.35</div>
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">1.35</div>
                 </div>
                 <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
-                  <div role="button" id="odd_1" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">500</div>
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">500</div>
                 </div>
                 <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
-                  <div role="button" id="odd_2" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">3.6</div>
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">3.6</div>
                 </div>
               </div>
             </div>
-            <div class="event_row flex-1 bg-inherit hover:bg-indigo-500 mb-px cursor-pointer">02</div>
-            <div class="event_row flex-1 bg-inherit hover:bg-indigo-500 mb-px cursor-pointer">03</div>
-            <div class="event_row flex-1 bg-inherit hover:bg-indigo-500 mb-px cursor-pointer">04</div>
-            <div class="event_row flex-1 bg-inherit hover:bg-indigo-500 cursor-pointer rounded-md">05</div>
+            <div class="event_row flex-row flex bg-inherit hover:bg-indigo-500 mb-3 cursor-pointer rounded-md">
+              <div class="event_timer flex  items-center justify-start pl-1 mr-1 text-white text-sm ">22:50
+              </div>
+              <div class="event_teams flex flex-col flex-1  ml-1 pl-2 items-left justify-start">
+                <div class="event_teams_home_1  flex text-white text-sm" id="event_teams_home_1">Dortmund</div>
+                <div class="event_teams_away_2 flex text-white text-sm" id="event_teams_away_2">Wokfsburg</div>
+              </div>
+              <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">1.35</div>
+                </div>
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">500</div>
+                </div>
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">3.6</div>
+                </div>
+              </div>
+            </div>
+            <div class="event_row flex-row flex bg-inherit hover:bg-indigo-500 mb-3 cursor-pointer rounded-md">
+              <div class="event_timer flex  items-center justify-start pl-1 mr-1 text-white text-sm ">22:50
+              </div>
+              <div class="event_teams flex flex-col flex-1  ml-1 pl-2 items-left justify-start">
+                <div class="event_teams_home_1  flex text-white text-sm" id="event_teams_home_1">Dortmund</div>
+                <div class="event_teams_away_2 flex text-white text-sm" id="event_teams_away_2">Wokfsburg</div>
+              </div>
+              <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">1.35</div>
+                </div>
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">500</div>
+                </div>
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">3.6</div>
+                </div>
+              </div>
+            </div>
+            <div class="event_row flex-row flex bg-inherit hover:bg-indigo-500 mb-3 cursor-pointer rounded-md">
+              <div class="event_timer flex  items-center justify-start pl-1 mr-1 text-white text-sm">22:50
+              </div>
+              <div class="event_teams flex flex-col flex-1  ml-1 pl-2 items-left justify-start">
+                <div class="event_teams_home_1  flex text-white text-sm" id="event_teams_home_1">Dortmund</div>
+                <div class="event_teams_away_2 flex text-white text-sm" id="event_teams_away_2">Wokfsburg</div>
+              </div>
+              <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">1.35</div>
+                </div>
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">500</div>
+                </div>
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">3.6</div>
+                </div>
+              </div>
+            </div>
+            <div class="event_row flex-row flex bg-inherit hover:bg-indigo-500 mb-1 cursor-pointer rounded-md">
+              <div class="event_timer flex  items-center justify-start pl-1 mr-1 text-white text-sm">22:50
+              </div>
+              <div class="event_teams flex flex-col flex-1  ml-1 pl-2 items-left justify-start">
+                <div class="event_teams_home_1  flex text-white text-sm" id="event_teams_home_1">Dortmund</div>
+                <div class="event_teams_away_2 flex text-white text-sm" id="event_teams_away_2">Wokfsburg</div>
+              </div>
+              <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">1.35</div>
+                </div>
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">500</div>
+                </div>
+                <div class="event_markets flex flex-row flex-1 ml-1 items-center justify-evenly">
+                  <div role="button" id="odds_sock" class="event_markets_selections_1x2 w-16 text-center text-gray-900 bg-teal-300 bg-opacity-20 border-gray-300 focus:outline-none hover:bg-transparent focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 text-nowrap">3.6</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -313,6 +385,7 @@
         </div>
       <script src="static/js/script.js"></script>
       <script src="static/js/preliveScript.js"></script>
+
         
 </body>
 
