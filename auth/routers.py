@@ -15,7 +15,7 @@ from sqlmodel import Session, select, update, insert, values
 
 from database import SessionLocal
 from auth.models import Users
-from funds.models import Funds, Transactions
+from funds.models import Funds
 from auth.schemas import CreateUserRequest, Token
 from funds.schemas import DepositRequest, WithdrawRequest
 
@@ -23,6 +23,7 @@ from funds.schemas import DepositRequest, WithdrawRequest
 router = APIRouter(
     prefix='/auth',
     tags=['auth'])
+
 
 
 #################### REDIS BLACKLIST ####################

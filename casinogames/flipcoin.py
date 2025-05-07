@@ -6,13 +6,13 @@ def flipcoin():
     result = random.randint(0, 1)
 
     if result == 1:
-        return {"Round_result":"Win"}
+        return True
     
     else :
-        return {"Round_result":"Loss"}
+        return False
 
 
-
+print(flipcoin())
 
 
 

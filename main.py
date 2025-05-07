@@ -8,6 +8,7 @@ import os
 
 from database import engine
 from auth.routers import router as auth_router
+from casino.routers import router as casino_router
 from funds.routers import router as funds_router
 from sportsbook.routers import router as sportsbook_router
 from tests.routers import router as tests_router
@@ -32,6 +33,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(auth_router)
+app.include_router(casino_router)
 app.include_router(funds_router)
 app.include_router(sportsbook_router)
 app.include_router(tests_router)

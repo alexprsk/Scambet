@@ -14,7 +14,7 @@ from sqlmodel import Session, select, update, insert, values
 
 from auth.models import Users
 from database import SessionLocal
-from funds.models import Funds, Transactions
+from funds.models import Funds
 from funds.schemas import DepositRequest, WithdrawRequest
 
 
@@ -143,7 +143,7 @@ async def deposit(db:db_dependency, request: DepositRequest, token: Annotated[st
             previous_balance=current_balance,
             new_balance=new_balance,
             change_amount=change_amount,
-            transaction_id=uuid4(),
+            #transaction_id=uuid4(),
             reason='deposit'
         )
         db.add(new_funds)
@@ -152,7 +152,7 @@ async def deposit(db:db_dependency, request: DepositRequest, token: Annotated[st
         return {
             "message": "Deposit successful",
             "new_balance": new_balance,
-            "transaction_id": str(new_funds.transaction_id)
+            #"transaction_id": str(new_funds.transaction_id)
         }
 
 
