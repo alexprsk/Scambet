@@ -20,6 +20,8 @@ class Round(SQLModel, table=True):
 
     round_id: UUID = Field(default_factory=uuid4, primary_key=True)
     player_id: int = Field(index=True)
+    bet_amount: float
+    won_amount: float
     status: RoundStatus = Field(default=RoundStatus.OPEN)
     result: RoundResult = Field(default=None, nullable=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
