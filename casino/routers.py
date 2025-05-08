@@ -12,9 +12,10 @@ import random
 
 from auth.routers import oauth2_bearer, get_current_user
 from auth.models import Users
+from funds.models import Funds, TransactionStatus, TransactionType
 from funds.routers import  get_funds
 from casino.schemas import WithdrawRequest
-from casino.models import Round
+from casino.models import Round, RoundStatus
 
 router = APIRouter(
     prefix='/casino',
@@ -36,7 +37,7 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
 
 
-@router.post("/games/provider_1/flipcoin/play", status_code=status.HTTP_200_OK)
+@router.post("/games/provider_1/flipcoin/play", status_code=status.HTTP_200_OK, response_model=Round)
 async def WithdrawRequest(db: db_dependency, token: Annotated[str, Depends(oauth2_bearer)], bet_amount: float):
 
     try:
@@ -58,66 +59,83 @@ async def WithdrawRequest(db: db_dependency, token: Annotated[str, Depends(oauth
     try:
         if current_balance < bet_amount:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient Funds")
-        
+
+        current_balance = get_funds(db, user_id)
+        new_balance = current_balance - bet_amount
+        change_amount = bet_amount
+        reason=TransactionType.CASINO_BET
+
+
+        new_funds = Funds(
+            player_id=user_id,
+            previous_balance=current_balance,
+            new_balance=new_balance,
+            change_amount=bet_amount,
+            reason=reason
+        )
+
+        db.add(new_funds)
+        db.flush()
 
         if flipcoin():
             
+
             won_amount = bet_amount * 2
+            result="won"
+            reason=TransactionType.CASINO_WIN
+            change_amount = won_amount
             new_balance = current_balance + won_amount
 
             round = Round(
                 player_id = user_id,
                 bet_amount = bet_amount,
                 won_amount = won_amount,
-                status = "closed",
-                result = "won"
+                status = RoundStatus.CLOSED,
+                result = result
             )
 
             db.add(round)
+            db.flush()
+
+            new_funds = Funds(
+                player_id=user_id,
+                previous_balance=current_balance,
+                new_balance=new_balance,
+                change_amount=change_amount,
+                reason=reason
+            )
+
+            db.add(new_funds)
+
             
             #After this it would be better to actually send a balance update message instead of updating it here
-            db.exec(update(Users).where(Users.id == user_id).values(balance = new_balance))
-            db.commit()
 
-            return round
+            db.commit()
+            db.refresh(round)
+            
+            return round.model_dump()
+        
         else:
-            new_balance = current_balance - bet_amount
             won_amount = 0
+
 
             round = Round(
                 player_id = user_id,
                 bet_amount = bet_amount,
                 won_amount = won_amount,
-                status = "closed",
+                status = RoundStatus.CLOSED,
                 result = "loss"
             )
 
             db.add(round)
             db.flush()
-            
-            db.exec(update(Users).where(Users.id == user_id).values(balance=new_balance))
+
+
             db.commit()
-            
-            return round
+            db.refresh(round)
+            return round.model_dump()
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
             
         
-        
-
-
-
-
-    
-
-    
-
-
-
-
-
-
-
-
-

@@ -22,6 +22,8 @@ class Round(BaseModel):
     player_id: int 
     status: RoundStatus 
     result: RoundResult | None
+    bet_amount: float
+    won_amount: float 
     created_at: datetime 
     updated_at: datetime 
 
