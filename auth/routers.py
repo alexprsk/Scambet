@@ -173,7 +173,9 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
 
 
 @router.post("/logout", status_code=status.HTTP_200_OK)
-async def logout(token: str = Depends(oauth2_bearer)):
+async def logout(request: Request):
+
+    token = request.cookies.get("access_token")
 
     TOKEN_BLACKLIST.append(token)
 
