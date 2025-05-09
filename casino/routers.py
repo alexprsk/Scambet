@@ -34,11 +34,26 @@ db_dependency = Annotated[Session, Depends(get_db)]
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
 
+@router.get("/history", status_code=status.HTTP_200_OK)
+async def casino_history(
+    db: db_dependency,
+    token: Annotated[str, Depends(oauth2_bearer)]
+):
+    """
+    Get casino history for the authenticated user
+    """
+    current_user = get_current_user(token)
+    # Your business logic here using current_user['user_id']
+    history = db.exec(select(Round).where(Round.player_id == current_user['user_id']).order_by(Round.created_at.desc())).all()
+    
+    return history
+
+
 
 
 
 @router.post("/games/provider_1/flipcoin/play", status_code=status.HTTP_200_OK, response_model=Round)
-async def WithdrawRequest(db: db_dependency, token: Annotated[str, Depends(oauth2_bearer)], bet_amount: float):
+async def WithdrawRequest(db: db_dependency, token: Annotated[str, Depends(oauth2_bearer)], request: WithdrawRequest):
 
     try:
 
@@ -57,6 +72,7 @@ async def WithdrawRequest(db: db_dependency, token: Annotated[str, Depends(oauth
 
 
     try:
+        bet_amount = request.bet_amount
         if current_balance < bet_amount:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient Funds")
 
