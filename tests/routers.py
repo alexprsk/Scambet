@@ -109,6 +109,7 @@ def insert_games_in_db(response, db):
     return event, odds_snapshot
 
 
+
 #-----------------------------------------#
 #--------------- ENDPOINTS ---------------#
 #-----------------------------------------#
@@ -122,6 +123,8 @@ async def get_latest_test_odds(db: db_dependency):
 
     try:
         response = random_odds_generator(event_odds)
+        
+        insert_games_in_db(response, db)
         
         return response
 
