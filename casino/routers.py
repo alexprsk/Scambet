@@ -37,14 +37,17 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 @router.get("/history", status_code=status.HTTP_200_OK)
 async def casino_history(
     db: db_dependency,
-    token: Annotated[str, Depends(oauth2_bearer)]
-):
+    request: Request):
     """
     Get casino history for the authenticated user
     """
-    current_user = get_current_user(token)
-    # Your business logic here using current_user['user_id']
-    history = db.exec(select(Round).where(Round.player_id == current_user['user_id']).order_by(Round.created_at.desc())).all()
+    token = request.cookies.get("access_token")
+    print(f"User token is : {token}")
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized request")
+        
+    user = get_current_user(token)  # Validate token
+    history = db.exec(select(Round).where(Round.player_id == user['user_id']).order_by(Round.created_at.desc())).all()
     
     return history
 
@@ -53,15 +56,18 @@ async def casino_history(
 
 
 @router.post("/games/provider_1/flipcoin/play", status_code=status.HTTP_200_OK, response_model=Round)
-async def WithdrawRequest(db: db_dependency, token: Annotated[str, Depends(oauth2_bearer)], request: WithdrawRequest):
+async def WithdrawRequest(db: db_dependency, request: WithdrawRequest, user_request: Request):
 
     try:
 
-        user = get_current_user(token)
-
         
-        if user["user_id"] is None:
+        token = user_request.cookies.get("access_token")
+        print(f"User token is : {token}")
+        
+        if not token:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized request")
+            
+        user = get_current_user(token)  # Validate token
 
         
         user_id = user["user_id"]

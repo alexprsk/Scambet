@@ -81,13 +81,16 @@ def get_funds(db: db_dependency, user_id: int) -> float:
 
 
 @router.get('/', status_code=status.HTTP_200_OK)
-async def get_user_funds(db: db_dependency, token: Annotated[str, Depends(oauth2_bearer)]):
+async def get_user_funds(db: db_dependency,  request: Request):
     
+    token = request.cookies.get("access_token")
 
+    
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
+    
     user = get_current_user(token)
 
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
     
     # Get the full user object
     user_data = db.exec(select(Users).where(Users.id == user['user_id'])).first()
@@ -104,15 +107,13 @@ async def get_user_funds(db: db_dependency, token: Annotated[str, Depends(oauth2
 
 
 @router.post('/deposit', status_code=status.HTTP_200_OK)
-async def deposit(db:db_dependency, request: DepositRequest, token: Annotated[str, Depends(oauth2_bearer)]):
+async def deposit(db:db_dependency, deposit_request: DepositRequest, request:Request):
 
-    if request.amount <= 0:
-                raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Deposit amount must be positive"
-        )
+
 
     try:
+
+        token = request.cookies.get("access_token")
         user = get_current_user(token)
 
 
@@ -120,14 +121,21 @@ async def deposit(db:db_dependency, request: DepositRequest, token: Annotated[st
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid user credentials"
-            )        
+            )
+        
+        if deposit_request.amount <= 0:
+                    raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Deposit amount must be positive"
+            )
+            
         user_id = user['user_id']
         current_balance = get_funds(db, user_id)
         print(current_balance)
 
 
-        new_balance = current_balance + request.amount
-        change_amount = request.amount
+        new_balance = current_balance + deposit_request.amount
+        change_amount = deposit_request.amount
 
 
         # Start Transaction on Funds Table
@@ -168,17 +176,12 @@ async def deposit(db:db_dependency, request: DepositRequest, token: Annotated[st
 
 
 @router.post('/withdraw', status_code=status.HTTP_200_OK)
-async def withdraw(db:db_dependency, request: WithdrawRequest, token: Annotated[str, Depends(oauth2_bearer)]):
+async def withdraw(db:db_dependency, withdrawal: WithdrawRequest, request: Request):
 
-    if request.amount <= 0:
-                raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Deposit amount must be positive"
-        )
-    
-    
+
 
     try:
+        token = request.cookies.get("access_token")
         user = get_current_user(token)
 
 
@@ -186,17 +189,29 @@ async def withdraw(db:db_dependency, request: WithdrawRequest, token: Annotated[
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid user credentials"
-            )        
+            )
+        
+        
         user_id = user['user_id']
         current_balance = get_funds(db, user_id)
 
-        if request.amount > current_balance:
+
+        if withdrawal.amount <= 0:
+            raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Deposit amount must be positive"
+    )
+    
+    
+
+
+        if withdrawal.amount > current_balance:
              raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient balance to perform this operation")
 
 
 
-        new_balance = current_balance - request.amount
-        change_amount = (-request.amount)
+        new_balance = current_balance - withdrawal.amount
+        change_amount = (-withdrawal.amount)
 
 
         # Start Transaction on Funds Table

@@ -15,5 +15,3 @@ def flipcoin():
 print(flipcoin())
 
 
-
-
