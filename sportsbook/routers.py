@@ -7,6 +7,7 @@ import httpx, os
 import random
 
 from sportsbook.models import Events, OddsSnapshot
+from sportsbook.schemas import Bet
 from tests.models import TestOddsSnapshot
 from utilities.random_odds import random_odds_generator
 
@@ -195,3 +196,17 @@ async def get_prelive_odds(db:db_dependency):
     except httpx.RequestError as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unexpected error: {str(e)}")
     
+
+@router.post('/place_bet', status_code=status.HTTP_201_CREATED)
+async def place_bet(request: Request):
+
+    try:
+        data = await request.json()
+        print(data)
+
+        if not data:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail= "response was empty" )
+        
+    except Exception as e:
+        return {f"An error occurred {e}"}
+    return data
