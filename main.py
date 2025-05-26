@@ -1,3 +1,6 @@
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import init_beanie
+from sportsbook.models_mongo import Bet, PostRequest, Post
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -8,6 +11,7 @@ from sqlmodel import SQLModel
 import os
 
 from database import engine
+from databasemongo import MONGO_URI, MONGO_DB_NAME
 from auth.routers import router as auth_router
 from casino.routers import router as casino_router
 from funds.routers import router as funds_router
@@ -24,8 +28,19 @@ async def lifespan(app: FastAPI):
     """Initialize DB and other resources on startup."""
     SQLModel.metadata.create_all(engine)
     print("Database tables created")
+    mongo_client = AsyncIOMotorClient(MONGO_URI)
+    await init_beanie(
+        database=mongo_client[MONGO_DB_NAME], 
+        document_models=[Bet, PostRequest, Post]  # Add all your Beanie models here
+    )
+    print("MongoDB initialized")
+    
     yield
+    
+    # Cleanup on shutdown
     print("Shutting down")
+    mongo_client.close()
+
 
 
 app = FastAPI(lifespan=lifespan)

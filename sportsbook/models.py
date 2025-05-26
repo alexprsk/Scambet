@@ -1,6 +1,10 @@
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from sqlmodel import Field, SQLModel, Column, DateTime
+from typing import List, Optional
+from pydantic import BaseModel
+from beanie import Document
+from enum import Enum
 
 class Events(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -29,3 +33,5 @@ class OddsSnapshot(SQLModel, table=True):
     position: str
     outcome_price: float
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+

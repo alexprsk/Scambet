@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Query, Body
 from database import SessionLocal
 from sqlmodel import Session, select, update, insert, values, desc
 from typing import Optional, Annotated
 from dotenv import load_dotenv
+
 import httpx, os
 import random
 
 from sportsbook.models import Events, OddsSnapshot
+from sportsbook.models_mongo import Bet, PostRequest, Post
+
 from sportsbook.schemas import Bet
 from tests.models import TestOddsSnapshot
 from utilities.random_odds import random_odds_generator
@@ -210,3 +213,27 @@ async def place_bet(request: Request):
     except Exception as e:
         return {f"An error occurred {e}"}
     return data
+
+
+@router.post('/test/place_bet', status_code=status.HTTP_201_CREATED, response_model=Post)
+async def place_bet(post_request: PostRequest):
+
+    post = Post(**post_request.model_dump())
+    print("Incoming request data:", post)
+    await post.create()
+    return post
+
+
+@router.get('/test/place_bet', status_code=status.HTTP_201_CREATED, response_model=Bet)
+async def place_bet():
+
+    posts = await Bet.find_all().to_list()
+    return posts
+
+@router.get('/test/{bet_id}', status_code=status.HTTP_201_CREATED, response_model=Bet)
+async def place_bet(bet_id: str):
+
+    post = await Bet.get(bet_id)
+    if not post or post is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bet not Found")
+    return post
