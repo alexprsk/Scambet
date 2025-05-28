@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query, Body
 from database import SessionLocal
 from sqlmodel import Session, select, update, insert, values, desc
-from typing import Optional, Annotated
+from typing import Optional, Annotated, List
 from dotenv import load_dotenv
 
 import httpx, os
@@ -200,35 +200,30 @@ async def get_prelive_odds(db:db_dependency):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unexpected error: {str(e)}")
     
 
-@router.post('/place_bet', status_code=status.HTTP_201_CREATED)
-async def place_bet(request: Request):
 
-    try:
-        data = await request.json()
-        print(data)
-
-        if not data:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail= "response was empty" )
-        
-    except Exception as e:
-        return {f"An error occurred {e}"}
-    return data
+@router.post('/place_bet', status_code=status.HTTP_201_CREATED, response_model=Post)
+async def place_bet(request: PostRequest):
 
 
-@router.post('/test/place_bet', status_code=status.HTTP_201_CREATED, response_model=Post)
-async def place_bet(post_request: PostRequest):
+    post = Post(userId=request.userId,
+                stake=request.stake,
+                selections=request.selections)
 
-    post = Post(**post_request.model_dump())
     print("Incoming request data:", post)
-    await post.create()
+    print("Saving post...")
+    await post.insert()
+    print("Post saved.")
     return post
 
 
-@router.get('/test/place_bet', status_code=status.HTTP_201_CREATED, response_model=Bet)
+
+@router.get('/place_bet', status_code=status.HTTP_200_OK, response_model=List[Post])
 async def place_bet():
 
-    posts = await Bet.find_all().to_list()
+    posts = await Post.find_all().to_list()
     return posts
+
+
 
 @router.get('/test/{bet_id}', status_code=status.HTTP_201_CREATED, response_model=Bet)
 async def place_bet(bet_id: str):
