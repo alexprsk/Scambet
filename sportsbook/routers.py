@@ -48,69 +48,7 @@ def api_key_check(odds_api_key, url):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="API key not configured"
             )
-        
-
-
-
-def insert_games_in_db(response, db):
-
-    for game_data in response:
-
-        event = Events(
-
-            event_id = game_data["id"],
-            sport_key = game_data["sport_key"],
-            sport_title = game_data["sport_title"],
-            commence_time = game_data["commence_time"],
-            home_team = game_data["home_team"],
-            away_team = game_data["away_team"]
-
-        )
-
-        db.add(event)
-        db.flush()
-
-        for bookmaker_data in game_data["bookmakers"]:
-
-            if bookmaker_data["key"] in ["pinnacle", "sport888"]:
-
-                for market_data in bookmaker_data["markets"]:
-
-                    for outcomes_data in market_data["outcomes"]:
-                        
-                        outcome_team = outcomes_data["name"]
-                        position = ""
-
-                        if outcome_team == event.home_team:
-                            
-                            outcome_team = event.home_team
-                            position = "Home"
-
-                        elif outcome_team == event.away_team:
-
-                            outcome_team = event.away_team
-                            position = "Away"
-                        
-                        elif outcome_team == "Draw":
-                            
-                            outcome_team = "Draw"
-                            position = "Draw"
-
-
-                        odds_snapshot = OddsSnapshot(
-                        event_id=event.id,
-                        bookmaker_key=bookmaker_data["key"],
-                        bookmaker_title=bookmaker_data["title"],
-                        market_key=market_data["key"],
-                        market_last_update=market_data["last_update"],
-                        outcome_team=outcome_team,
-                        position = position,
-                        outcome_price=outcomes_data["price"]
-                    )
-                        db.add(odds_snapshot)
-
-        db.commit()
-
+   
 
 #-----------------------------------------#
 #--------------- ENDPOINTS ---------------#
@@ -166,11 +104,9 @@ async def get_events_by_sport(sport: str = Query(description="soccer_england_lea
 
 
 @router.get('/odds', status_code=status.HTTP_200_OK)
-async def get_odds_by_sport():
+async def get_upcoming_events_with_odds():
     start_time = time.perf_counter()
     
-    
-
     inserted = []
 
     async with httpx.AsyncClient() as client:
@@ -199,21 +135,7 @@ async def get_odds_by_sport():
         "events": inserted
     }
 
-    
 
-@router.get('/odds/prelive_latest', status_code=status.HTTP_200_OK)
-async def get_prelive_odds(db:db_dependency):
-
-    try:
-        response = db.exec(select(TestOddsSnapshot).order_by(TestOddsSnapshot.created_at.desc())).all()
-
-        if response is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Response was empty")
-        return response
-    
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unexpected error: {str(e)}")
-    
 
 
 @router.post('/place_bet', status_code=status.HTTP_201_CREATED, response_model=Post)
@@ -232,7 +154,7 @@ async def place_bet(request: PostRequest):
 
 
 
-@router.get('/place_bet', status_code=status.HTTP_200_OK, response_model=List[Post])
+@router.get('/open_bets', status_code=status.HTTP_200_OK, response_model=List[Post])
 async def place_bet():
 
     posts = await Post.find_all().to_list()
@@ -249,18 +171,3 @@ async def place_bet(bet_id: str):
     return post
 
 
-
-@router.post("/events/", response_model=Event, status_code=status.HTTP_201_CREATED)
-async def create_event(event: Event = Body(...)):
-
-    # Check if event with this ID already exists
-    existing_event = await Event.find_one(Event.event_id == event.event_id)
-    if existing_event:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Event with ID {event.event_id} already exists"
-        )
-    
-    # Insert the new event
-    await event.create()
-    return event
