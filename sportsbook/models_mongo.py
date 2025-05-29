@@ -41,4 +41,42 @@ class Bet(Document):
     created_at: datetime = datetime.now(timezone.utc)
 
     class Settings:
-        collection="Bets"
+        collection_name="bets"
+
+
+
+
+
+
+class Bookmaker(BaseModel):
+    # You can expand this with more detailed bookmaker fields later
+    key: str
+    title: str
+    last_update: Optional[datetime] = None
+    markets: List[dict] = []
+
+class Event(Document):
+    event_id: str
+    sport_key: str
+    sport_title: str
+    commence_time: datetime
+    home_team: str
+    away_team: str
+    bookmakers: List[Bookmaker] = []
+    
+    class Settings:
+        collection_name = "events"  # This will be the collection name in MongoDB
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "event_id": "test123",
+                "sport_key": "basketball_nba",
+                "sport_title": "NBA Basketball",
+                "commence_time": "2023-05-30T23:00:00Z",
+                "home_team": "Lakers",
+                "away_team": "Warriors",
+                "bookmakers": []
+            }
+        }
+        

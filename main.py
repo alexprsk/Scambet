@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from sportsbook.models_mongo import Bet, PostRequest, Post
+from sportsbook.models_mongo import Bet, PostRequest, Post, Event
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
     mongo_client = AsyncIOMotorClient(MONGO_URI)
     await init_beanie(
         database=mongo_client[MONGO_DB_NAME], 
-        document_models=[Bet, PostRequest, Post]  # Add all your Beanie models here
+        document_models=[Bet, PostRequest, Post, Event]  # Add all your Beanie models here
     )
     print("MongoDB initialized")
     
