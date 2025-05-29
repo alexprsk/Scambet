@@ -6,9 +6,11 @@ from dotenv import load_dotenv
 
 import httpx, os
 import random
+import time
 
 from sportsbook.models import Events, OddsSnapshot
 from sportsbook.models_mongo import Bet, PostRequest, Post, Event, Bookmaker
+from sportsbook.utils import insert_events_from_api
 
 from sportsbook.schemas import Bet
 from tests.models import TestOddsSnapshot
@@ -164,58 +166,38 @@ async def get_events_by_sport(sport: str = Query(description="soccer_england_lea
 
 
 @router.get('/odds', status_code=status.HTTP_200_OK)
-async def get_odds_by_sport(
-    sport: str = Query(default="soccer_england_league2"),
-    regions: str = Query(default="eu", description="eu,us"), 
-    markets: str = Query(default="h2h", description="h2h, spreads, totals")
-):
-    url = f"https://api.the-odds-api.com/v4/sports/{sport}/odds/?apiKey={odds_api_key}&regions={regions}&markets={markets}"
-
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            response.raise_for_status()
-            data = response.json()
-
-            inserted = []
-            for event in (data if isinstance(data, list) else [data]):
-                try:
-                    odds = Odds(
-                        event_id=event["id"],
-                        sport_key=event["sport_key"],
-                        sport_title=event["sport_title"],
-                        commence_time=event["commence_time"],
-                        home_team=event["home_team"],
-                        away_team=event["away_team"],
-                        bookmakers=event["bookmakers"]
-                    )
-                    await odds.insert()
-                    inserted.append(odds)
-                except Exception as e:
-                    print(f"Failed to insert event {event.get('id')}: {str(e)}")
-                    continue
-
-            return {
-                "inserted_count": len(inserted),
-                "events": inserted
-            }
-
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(
-            status_code=e.response.status_code,
-            detail=f"Odds API error: {e.response.text}"
-        )
-    except httpx.RequestError as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Failed to connect to Odds API: {str(e)}"
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Unexpected error: {str(e)}"
-        )
+async def get_odds_by_sport():
+    start_time = time.perf_counter()
     
+    
+
+    inserted = []
+
+    async with httpx.AsyncClient() as client:
+
+            url = f"https://api.the-odds-api.com/v4/sports/upcoming/odds/?apiKey={odds_api_key}&regions=us,eu&markets=h2h&bookmakers=pinnacle"
+            try:
+                response = await client.get(url)
+                response.raise_for_status()
+                data = response.json()
+
+                inserted.append(data)
+
+                await insert_events_from_api(data)
+            except httpx.HTTPStatusError as e:
+                print(f"HTTP error for {response}: {e.response.text}")
+            except httpx.RequestError as e:
+                print(f"Request error for {response}: {str(e)}")
+            except Exception as e:
+                print(f"Unexpected error for {response}: {str(e)}")
+
+    end_time = time.perf_counter()
+
+    return {
+        "inserted_count": len(inserted),
+        "duration_seconds": round(end_time - start_time, 2),
+        "events": inserted
+    }
 
     
 

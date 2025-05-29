@@ -42,7 +42,6 @@ async def lifespan(app: FastAPI):
     mongo_client.close()
 
 
-
 app = FastAPI(lifespan=lifespan)
 
 origins = [
