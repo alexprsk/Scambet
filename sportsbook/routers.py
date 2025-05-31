@@ -1,12 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query, Body
+from apscheduler.schedulers.background import BackgroundScheduler  
+from apscheduler.triggers.interval import IntervalTrigger 
 from database import SessionLocal
+from datetime import datetime, timezone
 from sqlmodel import Session, select, update, insert, values, desc
 from typing import Optional, Annotated, List
 from dotenv import load_dotenv
 
-import httpx, os
+import httpx, os,asyncio
 import random
 import time
+
+from scheduler.scheduler import scheduler, asyncscheduler
 
 from sportsbook.models import Events, OddsSnapshot
 from sportsbook.models_mongo import Bet, PostRequest, Post, Event, Bookmaker
@@ -30,6 +35,47 @@ odds_api_key=os.getenv("ODDS_API_KEY")
 #-----------------------------------------#
 #--------------- FUNCTIONS ---------------#
 #-----------------------------------------#
+
+inserted = []
+    
+async def my_async_task():
+    print(f"Async Task is running at {datetime.now()}")
+    global inserted
+    print(f"globalinserted: {inserted}")
+    inserted = []
+    print(f"inserted: {inserted}")
+    start_time = time.perf_counter()
+    async with httpx.AsyncClient() as client:
+
+            url = f"https://api.the-odds-api.com/v4/sports/upcoming/odds/?apiKey={odds_api_key}&regions=us,eu&markets=h2h&bookmakers=pinnacle"
+            try:
+                response = await client.get(url)
+                response.raise_for_status()
+                data = response.json()
+
+                inserted.append(data)
+                print(f"Appendedinserted: {inserted}")
+
+                await insert_events_from_api(data)
+            except httpx.HTTPStatusError as e:
+                print(f"HTTP error for {response}: {e.response.text}")
+            except httpx.RequestError as e:
+                print(f"Request error for {response}: {str(e)}")
+            except Exception as e:
+                print(f"Unexpected error for {response}: {str(e)}")
+
+    end_time = time.perf_counter()
+
+    print({"inserted_count": len(inserted),"duration_seconds": round(end_time - start_time, 2)})
+    return {
+
+        "events": inserted
+    }
+
+    # ... additional task code goes here ...
+
+#scheduler.add_job(my_daily_task, IntervalTrigger(seconds=3))
+asyncscheduler.add_job(my_async_task, IntervalTrigger(minutes=3), next_run_time=datetime.now())
 
 
 def get_db():
@@ -107,31 +153,11 @@ async def get_events_by_sport(sport: str = Query(description="soccer_england_lea
 async def get_upcoming_events_with_odds():
     start_time = time.perf_counter()
     
-    inserted = []
-
-    async with httpx.AsyncClient() as client:
-
-            url = f"https://api.the-odds-api.com/v4/sports/upcoming/odds/?apiKey={odds_api_key}&regions=us,eu&markets=h2h&bookmakers=pinnacle"
-            try:
-                response = await client.get(url)
-                response.raise_for_status()
-                data = response.json()
-
-                inserted.append(data)
-
-                await insert_events_from_api(data)
-            except httpx.HTTPStatusError as e:
-                print(f"HTTP error for {response}: {e.response.text}")
-            except httpx.RequestError as e:
-                print(f"Request error for {response}: {str(e)}")
-            except Exception as e:
-                print(f"Unexpected error for {response}: {str(e)}")
-
+        
     end_time = time.perf_counter()
 
     return {
-        "inserted_count": len(inserted),
-        "duration_seconds": round(end_time - start_time, 2),
+
         "events": inserted
     }
 

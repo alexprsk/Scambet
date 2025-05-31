@@ -22,4 +22,6 @@ os
 requests
 dotenv
 beanie
+apscheduler
+
 

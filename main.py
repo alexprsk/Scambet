@@ -7,8 +7,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from apscheduler.schedulers.background import BackgroundScheduler
 from sqlmodel import SQLModel
 import os
+
+from scheduler.scheduler import scheduler, asyncscheduler
 
 from database import engine
 from databasemongo import MONGO_URI, MONGO_DB_NAME
@@ -34,11 +37,16 @@ async def lifespan(app: FastAPI):
         document_models=[Bet, PostRequest, Post, Event]  # Add all your Beanie models here
     )
     print("MongoDB initialized")
+    scheduler.start()
+    print("scheduler started")
+    asyncscheduler.start()
+    print("Async scheduler started")
     
     yield
     
     # Cleanup on shutdown
     print("Shutting down")
+    scheduler.shutdown()
     mongo_client.close()
 
 
