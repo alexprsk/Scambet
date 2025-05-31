@@ -1,8 +1,9 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from sportsbook.models_mongo import Bet,  Post, Event
+from sportsbook.models_mongo import Bet,  Event
 
-MONGO_URI= 'mongodb://localhost:27017'
+
+MONGO_URI="mongodb://localhost:27017"
 MONGO_DB_NAME= 'PlayerBets'
 
 async def init_db():
