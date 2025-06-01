@@ -3,8 +3,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger 
 from database import SessionLocal
 from datetime import datetime, timezone
-from sqlmodel import Session, select, update, insert, values, desc
-from typing import Optional, Annotated, List
+from sqlmodel import Session
+from typing import Annotated, List
 from dotenv import load_dotenv
 
 import httpx, os,asyncio
@@ -13,12 +13,10 @@ import time
 
 from scheduler.scheduler import scheduler, asyncscheduler
 
-from sportsbook.models import Events, OddsSnapshot
-from sportsbook.models_mongo import Bet, PostRequest, Post, Event, Bookmaker
+from sportsbook.models_mongo import Bet, PostRequest, Post
 from sportsbook.utils import insert_events_from_api
 
 from sportsbook.schemas import Bet
-from tests.models import TestOddsSnapshot
 from utilities.random_odds import random_odds_generator
 
 router = APIRouter(
