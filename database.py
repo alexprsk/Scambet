@@ -14,7 +14,7 @@ engine = create_engine(
 
 SQLALCHEMY_DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:password@localhost:5432/dev.scambet"
+    "postgresql://postgres:password@localhost:5432/scambet"
 )
 
 engine = create_engine(
