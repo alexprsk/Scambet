@@ -72,9 +72,7 @@ async def my_async_task():
         "events": inserted
     }
 
-    # ... additional task code goes here ...
 
-#scheduler.add_job(my_daily_task, IntervalTrigger(seconds=3))
 asyncscheduler.add_job(my_async_task, IntervalTrigger(minutes=3), next_run_time=datetime.now())
 
 
