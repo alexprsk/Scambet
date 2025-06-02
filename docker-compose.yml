@@ -1,6 +1,6 @@
 services:
   scambet:
-    image: alexeidochub/scambet:v1
+    image: alexeidochub/scambet:v2
     ports:
       - "8000:8000"
     env_file:
@@ -9,6 +9,11 @@ services:
       - mongodb
       - postgresql
 
+  scambetfront:
+    image: scambetfront:v1
+    ports:
+      - "80:80"
+      
   mongodb:
     image: mongodb/mongodb-community-server
     ports:

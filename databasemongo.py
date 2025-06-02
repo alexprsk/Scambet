@@ -4,7 +4,11 @@ from sportsbook.models_mongo import Bet,  Event
 import os
 
 
-MONGO_URI = 'mongodb://mongodb:27017'
+MONGO_URI = os.getenv(
+    'MONGO_URI'
+    ,'mongodb://localhost:27017'
+    )
+
 MONGO_DB_NAME= 'PlayerBets'
 
 async def init_db():
