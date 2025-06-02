@@ -3,3 +3,5 @@ __pycache__
 database.db
 .env
 prod.env
+nginx
+prod.env
