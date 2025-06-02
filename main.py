@@ -24,6 +24,7 @@ from sportsbook.routers import router as sportsbook_router
 templates = Jinja2Templates(directory="templates")
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize DB and other resources on startup."""
@@ -49,6 +50,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
 
 origins = [
     "http://localhost:5173",  # Dev
