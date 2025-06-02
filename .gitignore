@@ -4,3 +4,4 @@ database.db
 .env
 nginx
 prod.env
+prod.env
