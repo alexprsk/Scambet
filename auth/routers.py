@@ -12,7 +12,6 @@ from passlib.hash import pbkdf2_sha256
 from sqlmodel import Session, select, update, insert, values
 
 
-
 from database import SessionLocal
 from auth.models import Users
 from funds.models import Funds
@@ -36,6 +35,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 
 db_dependency = Annotated[Session, Depends(get_db)]

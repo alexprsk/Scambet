@@ -26,5 +26,6 @@ engine = get_database_engine()
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
-    bind=engine
+    bind=engine,
+    class_= Session  # Ensures SQLModel compatibility
 )
