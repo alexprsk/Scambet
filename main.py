@@ -51,8 +51,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 origins = [
-    "http://localhost:5173",
-    # add any additional origins if necessary
+    "http://localhost:5173",  # Dev
+    "http://localhost",       # Nginx frontend
+    "http://scambetfront",    # Internal Docker name 
 ]
 
 app.add_middleware(
