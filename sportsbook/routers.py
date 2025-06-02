@@ -71,7 +71,7 @@ async def my_async_task():
     }
 
 
-asyncscheduler.add_job(my_async_task, IntervalTrigger(minutes=3), next_run_time=datetime.now())
+asyncscheduler.add_job(my_async_task, IntervalTrigger(minutes=10), next_run_time=datetime.now())
 
 
 def get_db():
