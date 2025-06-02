@@ -13,7 +13,7 @@ engine = create_engine(
 
 
 SQLALCHEMY_DATABASE_URL = os.getenv(
-    "DATABASE_URL",
+    "SQLALCHEMY_DATABASE_URL",
     "postgresql://postgres:password@localhost:5432/scambet"
 )
 
