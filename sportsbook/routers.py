@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query, Body
+from fastapi.security import OAuth2PasswordBearer
+
 from apscheduler.schedulers.background import BackgroundScheduler  
 from apscheduler.triggers.interval import IntervalTrigger 
 from database import SessionLocal
 from datetime import datetime, timezone
+from jose import jwt, JWTError
 from sqlmodel import Session
 from typing import Annotated, List
 from dotenv import load_dotenv
@@ -13,7 +16,11 @@ import time
 
 from scheduler.scheduler import scheduler, asyncscheduler
 
-from auth.routers import get_current_user
+from sqlmodel import Session, select, update, insert, values
+
+
+from auth.models import Users
+from auth.routers import TOKEN_BLACKLIST, ALGORITHM, SECRET_KEY
 from sportsbook.models_mongo import Bet, PostRequest, Post, Bets
 from sportsbook.utils import insert_events_from_api
 
@@ -28,7 +35,6 @@ router = APIRouter(
 load_dotenv()
 
 odds_api_key=os.getenv("ODDS_API_KEY")
-
 
 
 #-----------------------------------------#
@@ -83,6 +89,40 @@ def get_db():
         db.close()
 
 db_dependency = Annotated[Session, Depends(get_db)]
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
+
+
+def get_user(db: db_dependency, username: str):
+
+    user = db.exec(select(Users).where(Users.username == username)).first()
+
+    if user:
+        return user
+
+def get_current_user(db:db_dependency, token : Annotated[str, Depends(oauth2_bearer)]):
+
+    try:
+
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print(payload)
+        username = payload.get('sub')
+        user_id = payload.get('id')
+        
+
+        if token in TOKEN_BLACKLIST:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
+        
+        if username is None or user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
+        user = get_user(db, username)
+        return user
+
+    
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
+    
+
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 def api_key_check(odds_api_key, url):
         
@@ -185,30 +225,25 @@ async def open_bets():
     return posts
 
 
-@router.get('/open_bets', status_code=status.HTTP_200_OK, response_model=List[Bets])
-async def user_open_bets(request:Request):
-
+@router.get('/open_bets', status_code=status.HTTP_200_OK)
+async def user_open_bets(db: db_dependency, current_user: user_dependency):
     try:
-        token = request.cookies.get("access_token")
-        user = get_current_user(token)
-        print(token, user)
-
-
-        if user is None:
+        if current_user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid user credentials"
             )
-        
-    except Exception as e:
 
+        user_id = str(current_user.id)  # Ensure string format matches how you store it
+        bets = await Bets.find(Bets.userId == user_id).to_list()
+        return bets
+
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
-        )    
-    user_id = user['user_id']
-    bets  = await Bets.find(Bets.userId == user_id).to_list()
-    return bets 
+        )
+
 
 
 @router.get('/test/{bet_id}', status_code=status.HTTP_201_CREATED, response_model=Bets)
