@@ -13,7 +13,8 @@ import time
 
 from scheduler.scheduler import scheduler, asyncscheduler
 
-from sportsbook.models_mongo import Bet, PostRequest, Post
+from auth.routers import get_current_user
+from sportsbook.models_mongo import Bet, PostRequest, Post, Bets
 from sportsbook.utils import insert_events_from_api
 
 from sportsbook.schemas import Bet
@@ -160,12 +161,13 @@ async def get_upcoming_events_with_odds():
 
 
 
-@router.post('/place_bet', status_code=status.HTTP_201_CREATED, response_model=Post)
+@router.post('/place_bet', status_code=status.HTTP_201_CREATED, response_model=Bets)
 async def place_bet(request: PostRequest):
 
 
-    post = Post(userId=request.userId,
+    post = Bets(userId=request.userId,
                 stake=request.stake,
+                status=request.status,
                 selections=request.selections)
 
     print("Incoming request data:", post)
@@ -176,18 +178,43 @@ async def place_bet(request: PostRequest):
 
 
 
-@router.get('/open_bets', status_code=status.HTTP_200_OK, response_model=List[Post])
-async def place_bet():
+@router.get('/get_all_open_bets', status_code=status.HTTP_200_OK, response_model=List[Bets])
+async def open_bets():
 
-    posts = await Post.find_all().to_list()
+    posts = await Bets.find_all().to_list()
     return posts
 
 
+@router.get('/open_bets', status_code=status.HTTP_200_OK, response_model=List[Bets])
+async def user_open_bets(request:Request):
 
-@router.get('/test/{bet_id}', status_code=status.HTTP_201_CREATED, response_model=Bet)
+    try:
+        token = request.cookies.get("access_token")
+        user = get_current_user(token)
+        print(token, user)
+
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid user credentials"
+            )
+        
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )    
+    user_id = user['user_id']
+    bets  = await Bets.find(Bets.userId == user_id).to_list()
+    return bets 
+
+
+@router.get('/test/{bet_id}', status_code=status.HTTP_201_CREATED, response_model=Bets)
 async def place_bet(bet_id: str):
 
-    post = await Bet.get(bet_id)
+    post = await Bets.get(bet_id)
     if not post or post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bet not Found")
     return post

@@ -15,6 +15,7 @@ class PostRequest(Document):
     userId: str
     stake: float
     selections: Optional[List[dict]]
+    status: BetStatus
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
@@ -31,6 +32,19 @@ class Post(Document):
 
     class Settings:
         collection_name='posts'
+
+class Bets(Document):
+    id: Optional[PydanticObjectId] = Field(alias="_id", default=None)
+    userId: str
+    stake: float
+    status: BetStatus
+    selections: List[dict]
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+    class Settings:
+        collection_name='bets'
 
 class Bet(Document):
 

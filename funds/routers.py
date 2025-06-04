@@ -92,7 +92,7 @@ async def get_user_funds(db: db_dependency,  request: Request):
     user = get_current_user(token)
 
     
-    # Get the full user object
+    
     user_data = db.exec(select(Users).where(Users.id == user['user_id'])).first()
     
     if not user_data:
