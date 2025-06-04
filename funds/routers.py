@@ -39,32 +39,40 @@ def get_db():
 SECRET_KEY = '939a99c39bf3dc73316bb5fd52c2195a596485c21cdb7cce1151c1a41dde32df'
 ALGORITHM = 'HS256'
 
+db_dependency = Annotated[Session, Depends(get_db)]
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
 
-def get_current_user(token = Annotated[str, Depends(oauth2_bearer)]):
+def get_user(db: db_dependency, username: str):
+
+    user = db.exec(select(Users).where(Users.username == username)).first()
+
+    if user:
+        return user
+
+def get_current_user(db:db_dependency, token : Annotated[str, Depends(oauth2_bearer)]):
 
     try:
 
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
+        print(payload)
         username = payload.get('sub')
         user_id = payload.get('id')
-        user_role = payload.get('role')
+        
 
         if token in TOKEN_BLACKLIST:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
         
         if username is None or user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
-    
-        return {'username':username, 'user_id': user_id, 'user_role': user_role}
+        user = get_user(db, username)
+        return user
 
     
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
     
-db_dependency = Annotated[Session, Depends(get_db)]
+
 user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
@@ -107,17 +115,15 @@ async def get_user_funds(db: db_dependency,  request: Request):
 
 
 @router.post('/deposit', status_code=status.HTTP_200_OK)
-async def deposit(db:db_dependency, deposit_request: DepositRequest, request:Request):
+async def deposit(db:db_dependency, deposit_request: DepositRequest, current_user: user_dependency):
 
 
 
     try:
 
-        token = request.cookies.get("access_token")
-        user = get_current_user(token)
+        
 
-
-        if user is None:
+        if current_user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid user credentials"
@@ -129,7 +135,7 @@ async def deposit(db:db_dependency, deposit_request: DepositRequest, request:Req
                 detail="Deposit amount must be positive"
             )
             
-        user_id = user['user_id']
+        user_id = current_user.id
         current_balance = get_funds(db, user_id)
         print(current_balance)
 
@@ -176,23 +182,19 @@ async def deposit(db:db_dependency, deposit_request: DepositRequest, request:Req
 
 
 @router.post('/withdraw', status_code=status.HTTP_200_OK)
-async def withdraw(db:db_dependency, withdrawal: WithdrawRequest, request: Request):
+async def withdraw(db:db_dependency, withdrawal: WithdrawRequest, current_user: user_dependency):
 
 
 
     try:
-        token = request.cookies.get("access_token")
-        user = get_current_user(token)
-
-
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid user credentials"
-            )
+        if current_user is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid user credentials"
+                    )
         
         
-        user_id = user['user_id']
+        user_id = current_user.id
         current_balance = get_funds(db, user_id)
 
 
@@ -234,7 +236,7 @@ async def withdraw(db:db_dependency, withdrawal: WithdrawRequest, request: Reque
         db.commit()
         
         return {
-            "message": "Deposit successful",
+            "message": "Withdrawal successful",
             "new_balance": new_balance,
             "transaction_id": str(new_funds.transaction_id)
         }
@@ -259,10 +261,10 @@ async def withdraw(db:db_dependency, withdrawal: WithdrawRequest, request: Reque
 ########### TEST ENDPOINTS ##########
 
 @router.put('/edit_amount/{user_id}', status_code=status.HTTP_200_OK)
-async def edit_amount(db:db_dependency, user_id : int, new_balance: float, request: Request):
+async def edit_amount(db:db_dependency, user_id : int, new_balance: float, current_user: user_dependency):
     
     
-    update_balance = db.exec(update(Users).where(Users.id == user_id).values(balance = new_balance))
+    update_balance = db.exec(update(Users).where(Users.id == current_user.id).values(balance = new_balance))
 
     if update_balance.rowcount == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Header
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from passlib.hash import pbkdf2_sha256
@@ -50,8 +50,15 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
 #################### FUNCTIONS ####################
 
+def get_user(db: db_dependency, username: str):
 
-def get_current_user(token = Annotated[str, Depends(oauth2_bearer)]):
+    user = db.exec(select(Users).where(Users.username == username)).first()
+
+    if user:
+        return user
+
+
+def get_current_user(db:db_dependency, token : Annotated[str, Depends(oauth2_bearer)]):
 
     try:
 
@@ -59,15 +66,15 @@ def get_current_user(token = Annotated[str, Depends(oauth2_bearer)]):
         print(payload)
         username = payload.get('sub')
         user_id = payload.get('id')
-        user_role = payload.get('role')
+        
 
         if token in TOKEN_BLACKLIST:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
         
         if username is None or user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
-    
-        return {'username':username, 'user_id': user_id, 'user_role': user_role}
+        user = get_user(db, username)
+        return user
 
     
     except JWTError:
@@ -75,6 +82,8 @@ def get_current_user(token = Annotated[str, Depends(oauth2_bearer)]):
 
 
 user_dependency = Annotated[str, Depends(get_current_user)]
+
+
 
 
 
@@ -173,11 +182,16 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
 
 
 @router.post("/logout", status_code=status.HTTP_200_OK)
-async def logout(request: Request):
+async def logout(authorization: Annotated[str | None, Header()] = None):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=400, detail="Missing or invalid token")
 
-    token = request.cookies.get("access_token")
-
+    token = authorization.replace("Bearer ", "")
+    if token in TOKEN_BLACKLIST:
+        return {"detail": "Token is already blacklisted"}
     TOKEN_BLACKLIST.append(token)
+
+    return {"detail": "Successfully logged out"}
 
 
     
