@@ -56,6 +56,7 @@ origins = [
     "http://localhost:5173",  # Dev
     "http://localhost",       # Nginx frontend
     "http://scambetfront",    # Internal Docker name 
+    "https://scambet.com"
 ]
 
 app.add_middleware(
