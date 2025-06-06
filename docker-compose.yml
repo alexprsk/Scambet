@@ -11,9 +11,11 @@ services:
       - postgresql
 
   scambetfront:
-    image: scambetfront:v1
+    image: alexeidochub/scambetfront:v1
     ports:
       - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - mongodb
       - postgresql
