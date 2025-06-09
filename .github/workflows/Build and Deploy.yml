@@ -1,0 +1,168 @@
+  name: Build Backend and Deploy
+
+  permissions:
+    id-token: write  
+    contents: read
+
+  run-name: Build Backend and Deploy from branch ${{ github.ref_name }} by @${{ github.actor }}
+
+  on:
+    push:
+      branches:
+        - master
+        - staging
+    workflow_dispatch:
+
+  jobs:
+    build-and-push:
+      runs-on: ubuntu-latest
+      outputs:
+        gh_repo: ${{ steps.export_repo.outputs.gh_repo }}
+        
+      steps:
+        - name: Code Checkout
+          uses: actions/checkout@v4
+          
+        - name: Build New Version With NPM
+          run: |
+            npm install
+            PUBLIC_URL=/ npm run build  # Forces absolute paths (e.g., `/static/js/file.js`)
+
+        - name: Set Lowercase Registry Path
+          id: set_lowercase
+          run: |
+
+            GH_REPO_LOWER="ghcr.io/$(echo ${{ github.actor }} | tr '[:upper:]' '[:lower:]')"
+            echo "GH_REPO_LOWER=${GH_REPO_LOWER}" >> $GITHUB_ENV
+            echo "Set GH_REPO_LOWER=${GH_REPO_LOWER}"  
+
+        - name: Set Target Repo
+          id: set_repo
+          run: |
+
+            if [ -z "${GH_REPO_LOWER}" ]; then
+              echo "Error: GH_REPO_LOWER is not set!"
+              exit 1
+            fi
+
+            GH_REPO="${GH_REPO_LOWER}/prd.scambetfront"
+            echo "GH_REPO=${GH_REPO}" >> $GITHUB_ENV
+            echo "Set GH_REPO=${GH_REPO}"
+
+        - name: Login to GitHub Container Registry
+          uses: docker/login-action@v1
+          with:
+            registry: ghcr.io
+            username: ${{ github.actor }}
+            password: ${{ secrets.CR_PAT }}
+
+        - name: Build and Push Docker Images
+          run: |
+            echo "Building and pushing image: $GH_REPO:latest"
+            docker build -t $GH_REPO:latest . -t $GH_REPO:${{github.sha}}
+            docker push $GH_REPO:latest
+            docker push $GH_REPO:${{github.sha}}
+
+        - name: Export GH_REPO for the Next Job
+          id: export_repo
+          run: |
+            echo "gh_repo=$GH_REPO" >> $GITHUB_OUTPUT
+
+    Deploy-New-Fe-Version:
+      runs-on: ubuntu-latest
+      needs: build-and-push
+
+      steps:
+        - name: Checkout 
+          uses: actions/checkout@v4
+
+        - name: Configure AWS Credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-region: eu-central-1
+            role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-for-EC2-full
+            role-session-name: FrontendDeployment
+            audience: sts.amazonaws.com
+
+        - name: Get Runner IP Address
+          id: ip
+          uses: haythem/public-ip@v1.2
+        - name: whitelist runner ip address
+          run: |
+            aws ec2 authorize-security-group-ingress \
+              --group-id ${{ secrets.AWS_SG_GROUP_ID }} \
+              --protocol tcp \
+              --port 22 \
+              --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+        - name: Upload image to EC2 and reload container
+          env:
+            GH_REPO: ${{ needs.build-and-push.outputs.gh_repo }}
+          run: |
+            echo "${{ secrets.EC2_SSH_KEY }}" > temp_ssh_key.pem
+            chmod 600 temp_ssh_key.pem
+
+            ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+              sudo docker pull $GH_REPO:latest
+              sudo docker stop ubuntu-scambetfront-1 || true
+              sudo docker rm ubuntu-scambetfront-1 || true
+              sudo docker compose up -d
+              docker image prune --force
+            EOF
+            
+        - name: Revoke Runner IP Address
+          if: always()  # Ensures this runs even if previous steps fail
+          run: |
+            aws ec2 revoke-security-group-ingress \
+              --group-id ${{ secrets.AWS_SG_GROUP_ID }} \
+              --protocol tcp \
+              --port 22 \
+              --cidr ${{ steps.ip.outputs.ipv4 }}/32            
+
+        
+
+        - name: Cleanup SSH key
+          run: rm -f temp_ssh_key.pem
+
+        - name: Generate and display summary
+          run: |
+            {
+              echo "### 🚀 Frontend Deployment Summary"
+              echo ""
+              echo "**Status:** ✅ Success"
+              echo "**Deployed Branch:** \`${{ github.ref_name }}\`"
+              echo "**Triggered by:** \`@${{ github.actor }}\`"
+              echo "**Run Number:** \`${{ github.run_number }}\`"
+              echo ""
+              echo "### 📦 Docker Image Details"
+              echo "- **Repository:** \`${{ needs.build-and-push.outputs.gh_repo }}\`"
+              echo "- **Tags:**"
+              echo "  - \`latest\` (for deployment)"
+              echo "  - \`${{ github.sha }}\` (immutable commit reference)"
+              echo ""
+              echo "### 🧱 Build & Deploy Steps"
+              echo "1. ✅ Code checkout"
+              echo "2. ✅ NPM install and production build"
+              echo "3. ✅ Docker image built and tagged"
+              echo "4. ✅ Image pushed to GHCR"
+              echo "5. ✅ EC2 instance pulled the latest image"
+              echo "6. ✅ Container restarted with Docker Compose"
+              echo "7. ✅ Old images pruned"
+              echo ""
+              echo "### 🐳 Docker Commands for Manual Use"
+              echo "**Pull latest image:**"
+              echo "\`\`\`bash"
+              echo "docker pull ${{ needs.build-and-push.outputs.gh_repo }}:latest"
+              echo "\`\`\`"
+              echo "**Run the container locally:**"
+              echo "\`\`\`bash"
+              echo "docker run -p 80:80 ${{ needs.build-and-push.outputs.gh_repo }}:latest"
+              echo "\`\`\`"
+              echo ""
+              echo "### 🔒 EC2 Access Info"
+              echo "- IP whitelisted temporarily during deploy"
+              echo "- SSH key removed after deployment"
+              echo ""
+              echo "---"
+              echo "_Generated on $(date -u) UTC_"
+            } >> $GITHUB_STEP_SUMMARY
