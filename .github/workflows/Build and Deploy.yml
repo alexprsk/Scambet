@@ -22,11 +22,6 @@
       steps:
         - name: Code Checkout
           uses: actions/checkout@v4
-          
-        - name: Build New Version With NPM
-          run: |
-            npm install
-            PUBLIC_URL=/ npm run build  # Forces absolute paths (e.g., `/static/js/file.js`)
 
         - name: Set Lowercase Registry Path
           id: set_lowercase
@@ -45,7 +40,7 @@
               exit 1
             fi
 
-            GH_REPO="${GH_REPO_LOWER}/prd.scambetfront"
+            GH_REPO="${GH_REPO_LOWER}/prd.scambet"
             echo "GH_REPO=${GH_REPO}" >> $GITHUB_ENV
             echo "Set GH_REPO=${GH_REPO}"
 
@@ -104,8 +99,8 @@
 
             ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
               sudo docker pull $GH_REPO:latest
-              sudo docker stop ubuntu-scambetfront-1 || true
-              sudo docker rm ubuntu-scambetfront-1 || true
+              sudo docker stop ubuntu-scambet-1 || true
+              sudo docker rm ubuntu-scambet-1 || true
               sudo docker compose up -d
               docker image prune --force
             EOF
