@@ -4,7 +4,7 @@ permissions:
   id-token: write  
   contents: read
 
-run-name: "Start/Stop Scambet action - action: ${{ github.event.inputs.action }} from branch ${{ github.ref_name }} by @${{ github.actor }}" 
+run-name: "Start/Stop Scambet - Action: ${{ github.event.inputs.action }} from branch ${{ github.ref_name }} by @${{ github.actor }}" 
 
 on:
   workflow_dispatch:
@@ -97,6 +97,7 @@ jobs:
           else
 
             echo "✅ Scambet is Already Up: $INSTANCE_IDS"
+            exit 0
 
           fi
 
