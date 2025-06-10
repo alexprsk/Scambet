@@ -4,7 +4,7 @@ permissions:
   id-token: write  
   contents: read
 
-run-name: Start/Stop Scambet action - action: ${{ github.event.inputs.action }} from branch ${{ github.ref_name }} by @${{ github.actor }} 
+run-name: "Start/Stop Scambet action - action: ${{ github.event.inputs.action }} from branch ${{ github.ref_name }} by @${{ github.actor }}"
 
 on:
   workflow_dispatch:
@@ -14,17 +14,15 @@ on:
         type: choice
         required: true
         options: 
-        - start
-        - stop
-        - check
-
+          - start
+          - stop
+          - check
 
 jobs:
   Start-or-Stop:
     runs-on: ubuntu-latest
     
     steps:
-    
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -36,7 +34,6 @@ jobs:
       - name: Check Scambet Instances
         if: github.event.inputs.action == 'check'
         run: |
-
           INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
             | jq -r '.Reservations[].Instances[] | select(.State.Name == "stopped") | .InstanceId')
 
@@ -52,11 +49,9 @@ jobs:
             echo "🔍 Names of stopped instances: $INSTANCE_NAMES"
           fi
 
-
       - name: Stop Scambet Instances
         if: github.event.inputs.action == 'stop'
         run: |
-
           INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
             | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .InstanceId')
 
@@ -64,11 +59,8 @@ jobs:
             | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .Tags[]? | select(.Key == "Name") | .Value')
 
           if [ -z "$INSTANCE_IDS" ]; then
-
             echo "✅ Scambet is already stopped. No running instances."
-
           else
-
             echo "🛑 Stopping Instances with ID(s): $INSTANCE_IDS"
             echo "🖥️ Name(s): $INSTANCE_NAMES"
 
@@ -76,11 +68,9 @@ jobs:
             echo "Instances Stopped"
           fi
 
-
       - name: Start Scambet Instances
         if: github.event.inputs.action == 'start'
         run: |
-
           INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
             | jq -r '.Reservations[].Instances[] | select(.State.Name == "stopped") | .InstanceId')
           
@@ -88,21 +78,18 @@ jobs:
             | jq -r '.Reservations[].Instances[] | select(.State.Name == "stopped") | .Tags[]? | select(.Key == "Name") | .Value')
 
           if [ -n "$INSTANCE_IDS" ]; then
-
             echo "⚙️ Starting Instances with Id(s): $INSTANCE_IDS"
             echo "🖥️ Name(s): $INSTANCE_NAMES"
             aws ec2 start-instances --instance-ids $INSTANCE_IDS
             echo "Instances Started"
-
           else
-
             echo "✅ Scambet is Already Up: $INSTANCE_IDS"
-
           fi
 
       - name: Get Runner IP Address
         id: ip
         uses: haythem/public-ip@v1.2
+
       - name: whitelist runner ip address
         run: |
           aws ec2 authorize-security-group-ingress \
@@ -110,7 +97,6 @@ jobs:
             --protocol tcp \
             --port 22 \
             --cidr ${{ steps.ip.outputs.ipv4 }}/32
-
 
       - name: Docker Compose Up
         run: |
@@ -130,10 +116,5 @@ jobs:
             --port 22 \
             --cidr ${{ steps.ip.outputs.ipv4 }}/32            
 
-      
-
       - name: Cleanup SSH key
         run: rm -f temp_ssh_key.pem
-
-
-        
