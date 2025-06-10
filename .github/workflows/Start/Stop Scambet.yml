@@ -10,6 +10,8 @@ on:
   workflow_dispatch:
     inputs:
       action:
+        description: "Choose an action: start, stop or check"
+        type: choice
         options: 
         - start
         - stop
