@@ -4,19 +4,18 @@ permissions:
   id-token: write  
   contents: read
 
-run-name: "Start/Stop Scambet - Action: ${{ github.event.inputs.action }} from branch ${{ github.ref_name }} by @${{ github.actor }}" 
+run-name: " Action: ${{ github.event.inputs.action }} from branch ${{ github.ref_name }} by @${{ github.actor }}" 
 
 on:
   workflow_dispatch:
     inputs:
       action:
-        description: "Choose an action: start, stop or check"
+        description: "Choose an action Stop or Check"
         type: choice
         required: true
         options: 
-          - start
-          - stop
-          - check
+          - Stop
+          - Check
 
 
 jobs:
@@ -76,66 +75,3 @@ jobs:
             echo "Instances Stopped"
           fi
 
-
-      - name: Start Scambet Instances
-        if: github.event.inputs.action == 'start'
-        run: |
-
-          INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
-            | jq -r '.Reservations[].Instances[] | select(.State.Name == "stopped") | .InstanceId')
-          
-          INSTANCE_NAMES=$(aws ec2 describe-instances --region eu-central-1 --output json \
-            | jq -r '.Reservations[].Instances[] | select(.State.Name == "stopped") | .Tags[]? | select(.Key == "Name") | .Value')
-
-          if [ -n "$INSTANCE_IDS" ]; then
-
-            echo "⚙️ Starting Instances with Id(s): $INSTANCE_IDS"
-            echo "🖥️ Name(s): $INSTANCE_NAMES"
-            aws ec2 start-instances --instance-ids $INSTANCE_IDS
-            echo "Instances Started"
-
-          else
-
-            echo "✅ Scambet is Already Up: $INSTANCE_IDS"
-            exit 0
-
-          fi
-
-      - name: Get Runner IP Address
-        id: ip
-        uses: haythem/public-ip@v1.2
-      - name: whitelist runner ip address
-        run: |
-          aws ec2 authorize-security-group-ingress \
-            --group-id ${{ secrets.AWS_SG_GROUP_ID }} \
-            --protocol tcp \
-            --port 22 \
-            --cidr ${{ steps.ip.outputs.ipv4 }}/32
-
-
-      - name: Docker Compose Up
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > temp_ssh_key.pem
-          chmod 600 temp_ssh_key.pem
-
-          ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-            sudo docker compose up -d
-          EOF
-          
-      - name: Revoke Runner IP Address
-        if: always()  # Ensures this runs even if previous steps fail
-        run: |
-          aws ec2 revoke-security-group-ingress \
-            --group-id ${{ secrets.AWS_SG_GROUP_ID }} \
-            --protocol tcp \
-            --port 22 \
-            --cidr ${{ steps.ip.outputs.ipv4 }}/32            
-
-      
-
-      - name: Cleanup SSH key
-        if: always()
-        run: rm -f temp_ssh_key.pem
-
-
-        
