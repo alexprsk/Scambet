@@ -1,4 +1,4 @@
-name: Start/Stop Scambet
+name: Scambet - Initiate
 
 permissions:
   id-token: write  
