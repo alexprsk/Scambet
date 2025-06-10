@@ -4,19 +4,18 @@ permissions:
   id-token: write  
   contents: read
 
-run-name: Start/Stop Scambet from branch ${{ github.ref_name }} by @${{ github.actor }}
+run-name: " Action: ${{ github.event.inputs.action }} from branch ${{ github.ref_name }} by @${{ github.actor }}" 
 
 on:
   workflow_dispatch:
     inputs:
       action:
-        description: "Choose an action: start, stop or check"
+        description: "Choose an action Stop or Check"
         type: choice
         required: true
         options: 
-        - start
-        - stop
-        - check
+          - Stop
+          - Check
 
 
 jobs:
@@ -51,3 +50,28 @@ jobs:
 
             echo "🔍 Names of stopped instances: $INSTANCE_NAMES"
           fi
+
+
+      - name: Stop Scambet Instances
+        if: github.event.inputs.action == 'stop'
+        run: |
+
+          INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
+            | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .InstanceId')
+
+          INSTANCE_NAMES=$(aws ec2 describe-instances --region eu-central-1 --output json \
+            | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .Tags[]? | select(.Key == "Name") | .Value')
+
+          if [ -z "$INSTANCE_IDS" ]; then
+
+            echo "✅ Scambet is already stopped. No running instances."
+
+          else
+
+            echo "🛑 Stopping Instances with ID(s): $INSTANCE_IDS"
+            echo "🖥️ Name(s): $INSTANCE_NAMES"
+
+            aws ec2 stop-instances --instance-ids $INSTANCE_IDS
+            echo "Instances Stopped"
+          fi
+
