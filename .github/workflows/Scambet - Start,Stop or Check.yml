@@ -4,7 +4,7 @@ permissions:
   id-token: write  
   contents: read
 
-run-name: Start/Stop Scambet from branch ${{ github.ref_name }} by @${{ github.actor }}
+run-name: Start/Stop Scambet action - action: ${{ github.event.inputs.action }} from branch ${{ github.ref_name }} by @${{ github.actor }} 
 
 on:
   workflow_dispatch:
@@ -53,6 +53,30 @@ jobs:
           fi
 
 
+      - name: Stop Scambet Instances
+        if: github.event.inputs.action == 'stop'
+        run: |
+
+          INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
+            | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .InstanceId')
+
+          INSTANCE_NAMES=$(aws ec2 describe-instances --region eu-central-1 --output json \
+            | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .Tags[]? | select(.Key == "Name") | .Value')
+
+          if [ -z "$INSTANCE_IDS" ]; then
+
+            echo "✅ Scambet is already stopped. No running instances."
+
+          else
+
+            echo "🛑 Stopping Instances with ID(s): $INSTANCE_IDS"
+            echo "🖥️ Name(s): $INSTANCE_NAMES"
+
+            aws ec2 stop-instances --instance-ids $INSTANCE_IDS
+            echo "Instances Stopped"
+          fi
+
+
       - name: Start Scambet Instances
         if: github.event.inputs.action == 'start'
         run: |
@@ -76,27 +100,40 @@ jobs:
 
           fi
 
-      - name: Stop Scambet Instances
-        if: github.event.inputs.action == 'stop'
+      - name: Get Runner IP Address
+        id: ip
+        uses: haythem/public-ip@v1.2
+      - name: whitelist runner ip address
         run: |
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ secrets.AWS_SG_GROUP_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
-          INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
-            | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .InstanceId')
 
-          INSTANCE_NAMES=$(aws ec2 describe-instances --region eu-central-1 --output json \
-            | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .Tags[]? | select(.Key == "Name") | .Value')
+      - name: Docker Compose Up
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > temp_ssh_key.pem
+          chmod 600 temp_ssh_key.pem
 
-          if [ -z "$INSTANCE_IDS" ]; then
+          ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            sudo docker compose up 
+          EOF
+          
+      - name: Revoke Runner IP Address
+        if: always()  # Ensures this runs even if previous steps fail
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id ${{ secrets.AWS_SG_GROUP_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32            
 
-            echo "✅ Scambet is already stopped. No running instances."
-            
-          else
+      
 
-            echo "🛑 Stopping Instances with ID(s): $INSTANCE_IDS"
-            echo "🖥️ Name(s): $INSTANCE_NAMES"
+      - name: Cleanup SSH key
+        run: rm -f temp_ssh_key.pem
 
-            aws ec2 stop-instances --instance-ids $INSTANCE_IDS
-            echo "Instances Stopped"
-          fi
 
         
