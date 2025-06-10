@@ -12,17 +12,12 @@ on:
       action:
         description: "Choose an action: start, stop or check"
         type: choice
+        required: true
         options: 
         - start
         - stop
         - check
-      message:
-        required: true
-      use-emoji:
-        type: boolean
-        description: Include 🎉🤣 emojis
-      environment:
-        type: environment
+
 
 jobs:
   Start-or-Stop:
