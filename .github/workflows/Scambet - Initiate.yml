@@ -24,7 +24,6 @@ jobs:
           audience: sts.amazonaws.com
 
       - name: Start Scambet Instances
-        if: github.event.inputs.action == 'start'
         run: |
 
           INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
