@@ -71,7 +71,7 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > temp_ssh_key.pem
           chmod 600 temp_ssh_key.pem
           
-          scp -i temp_ssh_key.pem   -o StrictHostKeyChecking=no ../workflow_scripts/scambet-deploy-rollback.sh ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/
+          scp -i temp_ssh_key.pem   -o StrictHostKeyChecking=no $GITHUB_WORKSPACE/workflow_scripts/scambet-deploy-rollback.sh ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/
           
           ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} \
             "chmod +x /home/ubuntu/scambet-deploy-rollback.sh && \
