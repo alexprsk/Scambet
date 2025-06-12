@@ -72,12 +72,12 @@ jobs:
           chmod 600 temp_ssh_key.pem
 
           ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << EOF
-            sudo docker pull ghcr.io/alexprsk/${{ github.event.inputs.instance }}:${{ github.event.inputs.version }}
-            sudo docker compose stop ${{ github.event.inputs.service }} || true
-            sudo docker compose rm ${{ github.event.inputs.service }} || true
-            sed -i "s|image: ghcr.io/alexprsk/${{ github.event.inputs.instance }}:.*|image: ghcr.io/alexprsk/${{ github.event.inputs.instance }}:${{ github.event.inputs.version }}|" docker-compose.yml            sudo docker compose up -d ${{ github.event.inputs.service }}
-            sudo docker compose up -d ${{ github.event.inputs.service }}
-            docker image prune --force
+          sudo docker pull ghcr.io/alexprsk/${{ github.event.inputs.instance }}:${{ github.event.inputs.version }}
+          sudo docker compose stop ${{ github.event.inputs.service }} || true
+          sudo docker compose rm ${{ github.event.inputs.service }} || true
+          sed -i "s|image: ghcr.io/alexprsk/${{ github.event.inputs.instance }}:.*|image: ghcr.io/alexprsk/${{ github.event.inputs.instance }}:${{ github.event.inputs.version }}|" docker-compose.yml
+          sudo docker compose up -d ${{ github.event.inputs.service }}
+          docker image prune --force
           EOF
 
       - name: Revoke Runner IP from EC2 Security Group 🔓
