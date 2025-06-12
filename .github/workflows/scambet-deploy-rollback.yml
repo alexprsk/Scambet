@@ -23,13 +23,17 @@ on:
         required: true
 
 env:
-    SCRIPT_PATH: "./workflow_scripts/"
+    SCRIPT_PATH: "./workflow_scripts/scambet-deploy-rollback.sh"
 
 jobs:
   Start-or-Stop:
     runs-on: ubuntu-latest
 
     steps:
+
+      - name: Checkout 
+        uses: actions/checkout@v4
+
       - name: Configure AWS Credentials 🔑
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -76,7 +80,7 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > temp_ssh_key.pem
           chmod 600 temp_ssh_key.pem
           
-          scp -i temp_ssh_key.pem   -o StrictHostKeyChecking=no ./scambet-deploy-rollback.sh ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/
+          scp -i temp_ssh_key.pem   -o StrictHostKeyChecking=no ${{ env.SCRIPT_PATH }} ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/
           
           ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} \
             "chmod +x /home/ubuntu/scambet-deploy-rollback.sh && \
@@ -84,7 +88,7 @@ jobs:
             VERSION='${{ github.event.inputs.version }}' \
             SERVICE='${{ github.event.inputs.service }}' \
             /home/ubuntu/scambet-deploy-rollback.sh"
-        working-directory: ${{ env.SCRIPT_PATH }}
+
 
       - name: Revoke Runner IP from EC2 Security Group 🔓
         if: always()
