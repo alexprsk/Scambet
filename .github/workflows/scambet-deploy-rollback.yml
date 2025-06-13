@@ -102,39 +102,13 @@ jobs:
       - name: Cleanup SSH Key 🧹
         run: rm -f temp_ssh_key.pem
 
-      - name: Write Detailed Deployment Summary to GitHub Actions UI 📄
-        if: always()
+      - name: Deployment Summary 📋
+        env:
+          GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
         run: |
-          {
-            echo "## ✅ Deployment Summary for Scambet"
-            echo ""
-            echo "| Key | Value |"
-            echo "|-----|-------|"
-            echo "| **Instance Name** | \`${{ github.event.inputs.instance }}\` |"
-            echo "| **Service** | \`${{ github.event.inputs.service }}\` |"
-            echo "| **Version (SHA)** | \`${{ github.event.inputs.version }}\` |"
-            echo "| **Branch** | \`${{ github.ref_name }}\` |"
-            echo "| **Triggered by** | @${{ github.actor }} |"
-            echo "| **Region** | \`eu-central-1\` |"
-            echo ""
-            echo "### 🖥️ EC2 Instance Check"
-            echo "- Verified EC2 instance \`${{ github.event.inputs.instance }}\` is running before proceeding."
-            echo ""
-            echo "### 🌐 IP Whitelisting"
-            echo "- Runner public IP was retrieved and temporarily whitelisted in the EC2 security group."
-            echo ""
-            echo "### 🐳 SSH & Deployment Script Execution"
-            echo "- SSH key was securely generated and used."
-            echo "- The deployment script \`${{ env.SCRIPT_PATH }}\` was uploaded to EC2."
-            echo "- Executed script with parameters:"
-            echo "  - INSTANCE=\`${{ github.event.inputs.instance }}\`"
-            echo "  - SERVICE=\`${{ github.event.inputs.service }}\`"
-            echo "  - VERSION=\`${{ github.event.inputs.version }}\`"
-            echo ""
-            echo "### 🔐 Security Cleanup"
-            echo "- Runner IP was revoked from the security group."
-            echo "- Temporary SSH key was securely deleted."
-            echo ""
-            echo "### ✅ Result"
-            echo "- 🚀 Deployment or rollback **completed successfully**."
-          } >> $GITHUB_SUMMARY
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔑 AWS Credentials configured" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ EC2 Instance checked" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌐 Runner public IP whitelisted and revoked" >> $GITHUB_STEP_SUMMARY
+          echo "- 🐳 Docker container uploaded and reloaded" >> $GITHUB_STEP_SUMMARY
+          echo "- 🧹 Temporary SSH key cleaned up" >> $GITHUB_STEP_SUMMARY
