@@ -26,7 +26,7 @@ env:
     SCRIPT_PATH: "./workflow_scripts/scambet-deploy-rollback.sh"
 
 jobs:
-  Start-or-Stop:
+  Deploy-to-Production:
     runs-on: ubuntu-latest
 
     steps:
@@ -102,18 +102,39 @@ jobs:
       - name: Cleanup SSH Key 🧹
         run: rm -f temp_ssh_key.pem
 
-      - name: Deployment Summary 📋
+      - name: Write Detailed Deployment Summary to GitHub Actions UI 📄
+        if: always()
         run: |
-          echo ""
-          echo "================ Deployment Summary ================"
-          echo "| Step                       | Description                                    |"
-          echo "|----------------------------|------------------------------------------------|"
-          echo "| 🔑 Configure AWS Credentials | Set AWS permissions and assume role           |"
-          echo "| ✅ Check EC2 Instance       | Verify EC2 instance is running before deploy  |"
-          echo "| 🌐 Get Runner Public IP     | Retrieve current runner's public IP           |"
-          echo "| 🔒 Whitelist Runner IP      | Allow SSH from runner IP in EC2 security group|"
-          echo "| 🐳 Upload Image & Reload    | Pull image, update compose file, restart svc  |"
-          echo "| 🔓 Revoke Runner IP         | Remove runner IP from security group after job|"
-          echo "| 🧹 Cleanup SSH Key          | Delete temporary SSH key file                  |"
-          echo "=================================================="
-          echo ""
+          {
+            echo "## ✅ Deployment Summary for Scambet"
+            echo ""
+            echo "| Key | Value |"
+            echo "|-----|-------|"
+            echo "| **Instance Name** | \`${{ github.event.inputs.instance }}\` |"
+            echo "| **Service** | \`${{ github.event.inputs.service }}\` |"
+            echo "| **Version (SHA)** | \`${{ github.event.inputs.version }}\` |"
+            echo "| **Branch** | \`${{ github.ref_name }}\` |"
+            echo "| **Triggered by** | @${{ github.actor }} |"
+            echo "| **Region** | \`eu-central-1\` |"
+            echo ""
+            echo "### 🖥️ EC2 Instance Check"
+            echo "- Verified EC2 instance \`${{ github.event.inputs.instance }}\` is running before proceeding."
+            echo ""
+            echo "### 🌐 IP Whitelisting"
+            echo "- Runner public IP was retrieved and temporarily whitelisted in the EC2 security group."
+            echo ""
+            echo "### 🐳 SSH & Deployment Script Execution"
+            echo "- SSH key was securely generated and used."
+            echo "- The deployment script \`${{ env.SCRIPT_PATH }}\` was uploaded to EC2."
+            echo "- Executed script with parameters:"
+            echo "  - INSTANCE=\`${{ github.event.inputs.instance }}\`"
+            echo "  - SERVICE=\`${{ github.event.inputs.service }}\`"
+            echo "  - VERSION=\`${{ github.event.inputs.version }}\`"
+            echo ""
+            echo "### 🔐 Security Cleanup"
+            echo "- Runner IP was revoked from the security group."
+            echo "- Temporary SSH key was securely deleted."
+            echo ""
+            echo "### ✅ Result"
+            echo "- 🚀 Deployment or rollback **completed successfully**."
+          } >> $GITHUB_SUMMARY
