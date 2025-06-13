@@ -1,0 +1,77 @@
+name: Scambet - Check or Stop
+
+permissions:
+  id-token: write  
+  contents: read
+
+run-name: " Action: ${{ github.event.inputs.action }} from branch ${{ github.ref_name }} by @${{ github.actor }}" 
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Choose an action Stop or Check"
+        type: choice
+        required: true
+        options: 
+          - Stop
+          - Check
+
+
+jobs:
+  Start-or-Stop:
+    runs-on: ubuntu-latest
+    
+    steps:
+    
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: eu-central-1
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-for-EC2-full
+          role-session-name: FrontendDeployment
+          audience: sts.amazonaws.com
+          
+      - name: Check Scambet Instances
+        if: github.event.inputs.action == 'check'
+        run: |
+
+          INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
+            | jq -r '.Reservations[].Instances[] | select(.State.Name == "stopped") | .InstanceId')
+
+          if [ -z "$INSTANCE_IDS" ]; then
+            echo "✅ Scambet is not up (no stopped instances)."
+          else
+            echo "🖥️ Found stopped instance(s): $INSTANCE_IDS"
+            
+            # Get the names of the stopped instances
+            INSTANCE_NAMES=$(aws ec2 describe-instances --region eu-central-1 --output json \
+              | jq -r '.Reservations[].Instances[] | select(.State.Name == "stopped") | .Tags[]? | select(.Key == "Name") | .Value')
+
+            echo "🔍 Names of stopped instances: $INSTANCE_NAMES"
+          fi
+
+
+      - name: Stop Scambet Instances
+        if: github.event.inputs.action == 'stop'
+        run: |
+
+          INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
+            | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .InstanceId')
+
+          INSTANCE_NAMES=$(aws ec2 describe-instances --region eu-central-1 --output json \
+            | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .Tags[]? | select(.Key == "Name") | .Value')
+
+          if [ -z "$INSTANCE_IDS" ]; then
+
+            echo "✅ Scambet is already stopped. No running instances."
+
+          else
+
+            echo "🛑 Stopping Instances with ID(s): $INSTANCE_IDS"
+            echo "🖥️ Name(s): $INSTANCE_NAMES"
+
+            aws ec2 stop-instances --instance-ids $INSTANCE_IDS
+            echo "Instances Stopped"
+          fi
+

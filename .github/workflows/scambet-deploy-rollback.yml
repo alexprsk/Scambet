@@ -1,0 +1,119 @@
+name: Scambet - Deploy or Rollback 🚀
+
+permissions:
+  id-token: write
+  contents: read
+
+run-name: "Deploy Version ${{ github.event.inputs.version }} from branch ${{ github.ref_name }} by @${{ github.actor }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      instance:
+        description: "instance name (e.g. prd.scambet)"
+        type: string
+        required: true
+      service:
+        description: "service name (scambet or scambetfront)"
+        type: string
+        required: true
+      version:
+        description: "add version to deploy or rollback (sha)"
+        type: string
+        required: true
+
+env:
+    SCRIPT_PATH: "./workflow_scripts/scambet-deploy-rollback.sh"
+
+jobs:
+  Start-or-Stop:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout 
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials 🔑
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: eu-central-1
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-for-EC2-full
+          role-session-name: Deployversion
+          audience: sts.amazonaws.com
+
+      - name: Check if EC2 Instance is Running ✅
+        run: |
+          INSTANCE_NAME="${{ github.event.inputs.instance }}"
+
+          INSTANCE_ID=$(aws ec2 describe-instances --region eu-central-1 --output json \
+            | jq -r --arg INSTANCE_NAME "$INSTANCE_NAME" '.Reservations[].Instances[] 
+            | select(.State.Name == "running") 
+            | select( .Tags[] | .Key == "Name" and  .Value == $INSTANCE_NAME) 
+            | .InstanceId')
+
+          if [ -n "$INSTANCE_ID" ]; then
+              echo "Instance: $INSTANCE_ID is up"
+              echo "Initiating Deployment..."
+          else
+              echo "Instance: $INSTANCE_ID is not up"
+              echo "Aborting"
+              exit 1
+          fi
+
+      - name: Get Runner Public IP 🌐
+        id: ip
+        uses: haythem/public-ip@v1.2
+
+      - name: Whitelist Runner IP on EC2 Security Group 🔒
+        run: |
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ secrets.AWS_SG_GROUP_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+        
+
+      - name: Upload Image & Reload Docker Container 🐳
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > temp_ssh_key.pem
+          chmod 600 temp_ssh_key.pem
+          
+          scp -i temp_ssh_key.pem   -o StrictHostKeyChecking=no ${{ env.SCRIPT_PATH }} ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/
+          
+          ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} \
+            "chmod +x /home/ubuntu/scambet-deploy-rollback.sh && \
+            INSTANCE='${{ github.event.inputs.instance }}' \
+            VERSION='${{ github.event.inputs.version }}' \
+            SERVICE='${{ github.event.inputs.service }}' \
+            /home/ubuntu/scambet-deploy-rollback.sh"
+
+
+      - name: Revoke Runner IP from EC2 Security Group 🔓
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id ${{ secrets.AWS_SG_GROUP_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+      - name: Cleanup SSH Key 🧹
+        run: rm -f temp_ssh_key.pem
+
+      - name: Deployment Summary 📋
+        run: |
+          echo ""
+          echo "================ Deployment Summary ================"
+          echo "| Step                       | Description                                    |"
+          echo "|----------------------------|------------------------------------------------|"
+          echo "| 🔑 Configure AWS Credentials | Set AWS permissions and assume role           |"
+          echo "| ✅ Check EC2 Instance       | Verify EC2 instance is running before deploy  |"
+          echo "| 🌐 Get Runner Public IP     | Retrieve current runner's public IP           |"
+          echo "| 🔒 Whitelist Runner IP      | Allow SSH from runner IP in EC2 security group|"
+          echo "| 🐳 Upload Image & Reload    | Pull image, update compose file, restart svc  |"
+          echo "| 🔓 Revoke Runner IP         | Remove runner IP from security group after job|"
+          echo "| 🧹 Cleanup SSH Key          | Delete temporary SSH key file                  |"
+          echo "=================================================="
+          echo ""
