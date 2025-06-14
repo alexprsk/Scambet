@@ -1,0 +1,52 @@
+services:
+  scambet:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    volumes:
+        - .:/app      
+    env_file:
+      - prod.env
+
+    depends_on:
+      - mongodb
+      - postgresql
+
+  scambetfront:
+    image: ghcr.io/alexprsk/prd.scambetfront:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - mongodb
+      - postgresql
+      - scambet
+      
+  mongodb:
+    image: mongodb/mongodb-community-server
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data:/data/db
+
+  postgresql:
+    image: bitnami/postgresql
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=password
+      - POSTGRESQL_DATABASE=scambet
+    volumes:
+      - postgres_data:/bitnami/postgresql
+
+volumes:
+  mongodb_data:
+  postgres_data:
+
+
+
+
