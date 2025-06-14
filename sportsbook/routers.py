@@ -23,6 +23,7 @@ from auth.models import Users
 from auth.routers import TOKEN_BLACKLIST, ALGORITHM, SECRET_KEY
 from sportsbook.models_mongo import Bet, PostRequest, Post, Bets
 from sportsbook.utils import insert_events_from_api
+from sportsbook.scripts.prelive_endpoints import get_all_events
 
 from sportsbook.schemas import Bet
 from utilities.random_odds import random_odds_generator
@@ -42,6 +43,7 @@ odds_api_key=os.getenv("ODDS_API_KEY")
 #-----------------------------------------#
 
 inserted = []
+cached_events = {}
     
 async def my_async_task():
     print(f"Async Task is running at {datetime.now()}")
@@ -78,7 +80,17 @@ async def my_async_task():
     }
 
 
-asyncscheduler.add_job(my_async_task, IntervalTrigger(minutes=10), next_run_time=datetime.now())
+
+async def scheduled_get_all_events():
+    global cached_events
+    cached_events = await get_all_events()
+    print(f"Events updated at {datetime.now()}: {list(cached_events.keys())}")
+
+
+
+asyncscheduler.add_job(scheduled_get_all_events, IntervalTrigger(minutes=10), next_run_time=datetime.now())
+asyncscheduler.add_job(get_all_events, IntervalTrigger(hours=24), next_run_time=datetime.now())
+
 
 
 def get_db():
