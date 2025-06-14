@@ -22,11 +22,18 @@ on:
         type: string
         required: true
 
+env:
+    SCRIPT_PATH: "./workflow_scripts/scambet-deploy-rollback.sh"
+
 jobs:
-  Start-or-Stop:
+  Deploy-to-Production:
     runs-on: ubuntu-latest
 
     steps:
+
+      - name: Checkout 
+        uses: actions/checkout@v4
+
       - name: Configure AWS Credentials 🔑
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -66,12 +73,14 @@ jobs:
             --port 22 \
             --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
+        
+
       - name: Upload Image & Reload Docker Container 🐳
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > temp_ssh_key.pem
           chmod 600 temp_ssh_key.pem
           
-          scp -i temp_ssh_key.pem   -o StrictHostKeyChecking=no ./workflow_scripts/scambet-deploy-rollback.sh ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/
+          scp -i temp_ssh_key.pem   -o StrictHostKeyChecking=no ${{ env.SCRIPT_PATH }} ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/
           
           ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} \
             "chmod +x /home/ubuntu/scambet-deploy-rollback.sh && \
@@ -79,6 +88,7 @@ jobs:
             VERSION='${{ github.event.inputs.version }}' \
             SERVICE='${{ github.event.inputs.service }}' \
             /home/ubuntu/scambet-deploy-rollback.sh"
+
 
       - name: Revoke Runner IP from EC2 Security Group 🔓
         if: always()
@@ -93,17 +103,12 @@ jobs:
         run: rm -f temp_ssh_key.pem
 
       - name: Deployment Summary 📋
+        env:
+          GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
         run: |
-          echo ""
-          echo "================ Deployment Summary ================"
-          echo "| Step                       | Description                                    |"
-          echo "|----------------------------|------------------------------------------------|"
-          echo "| 🔑 Configure AWS Credentials | Set AWS permissions and assume role           |"
-          echo "| ✅ Check EC2 Instance       | Verify EC2 instance is running before deploy  |"
-          echo "| 🌐 Get Runner Public IP     | Retrieve current runner's public IP           |"
-          echo "| 🔒 Whitelist Runner IP      | Allow SSH from runner IP in EC2 security group|"
-          echo "| 🐳 Upload Image & Reload    | Pull image, update compose file, restart svc  |"
-          echo "| 🔓 Revoke Runner IP         | Remove runner IP from security group after job|"
-          echo "| 🧹 Cleanup SSH Key          | Delete temporary SSH key file                  |"
-          echo "=================================================="
-          echo ""
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔑 AWS Credentials configured" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ EC2 Instance checked" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌐 Runner public IP whitelisted and revoked" >> $GITHUB_STEP_SUMMARY
+          echo "- 🐳 Docker container uploaded and reloaded" >> $GITHUB_STEP_SUMMARY
+          echo "- 🧹 Temporary SSH key cleaned up" >> $GITHUB_STEP_SUMMARY
