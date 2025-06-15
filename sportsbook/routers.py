@@ -84,12 +84,13 @@ async def my_async_task():
 async def scheduled_get_all_events():
     global cached_events
     cached_events = await get_all_events()
+    print(cached_events)
     print(f"Events updated at {datetime.now()}: {list(cached_events.keys())}")
 
 
 
 asyncscheduler.add_job(scheduled_get_all_events, IntervalTrigger(minutes=10), next_run_time=datetime.now())
-asyncscheduler.add_job(get_all_events, IntervalTrigger(hours=24), next_run_time=datetime.now())
+asyncscheduler.add_job(get_all_events, IntervalTrigger(minutes=5), next_run_time=datetime.now())
 
 
 
@@ -174,7 +175,7 @@ async def get_all_sports():
 
 
 
-@router.get('/events', status_code=status.HTTP_200_OK)
+@router.get('/events/by_sport', status_code=status.HTTP_200_OK)
 async def get_events_by_sport(sport: str = Query(description="soccer_england_league2")):
 
 
@@ -210,7 +211,17 @@ async def get_upcoming_events_with_odds():
         "events": inserted
     }
 
+@router.get('/events', status_code=status.HTTP_200_OK)
+async def get_all_events_from_api():
+    start_time = time.perf_counter()
+    
+        
+    end_time = time.perf_counter()
 
+    return {
+
+        "events": cached_events
+    }
 
 
 @router.post('/place_bet', status_code=status.HTTP_201_CREATED, response_model=Bets)
