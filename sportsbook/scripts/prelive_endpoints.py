@@ -96,11 +96,11 @@ async def get_all_events():
                     tennis_events.extend(events_json)
 
     return{
-        "baseball_events" : baseball_events,
-        "american_football_events": american_football_events,
-        "basketball_events" : basketball_events,
-        "soccer_events": soccer_events,
-        "tennis_events": tennis_events
+        "baseball" : baseball_events,
+        "american_football": american_football_events,
+        "basketball" : basketball_events,
+        "soccer": soccer_events,
+        "tennis": tennis_events
         }
 
 
