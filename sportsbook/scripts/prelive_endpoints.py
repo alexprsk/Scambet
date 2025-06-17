@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 import httpx
+import asyncio
 
 load_dotenv("prod.env")
 
@@ -43,8 +44,10 @@ async def get_all_events():
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
         sports_json = sports_response.json()
+        print(sports_json)
 
         list_of_sports = [sport.get("key") for sport in sports_json]
+        print(list_of_sports)
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
         #
@@ -83,7 +86,7 @@ async def get_all_events():
 
                 if "baseball" in sport_key:
                     baseball_events.extend(events_json)
-                elif "american_football" in sport_key:
+                elif "americanfootball" in sport_key:
                     american_football_events.extend(events_json)
                 elif "basketball" in sport_key:
                     basketball_events.extend(events_json)
@@ -99,3 +102,8 @@ async def get_all_events():
         "soccer_events": soccer_events,
         "tennis_events": tennis_events
         }
+
+
+if __name__ == "__main__":
+    asyncio.run(get_all_events())
+
