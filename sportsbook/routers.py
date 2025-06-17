@@ -90,7 +90,8 @@ async def scheduled_get_all_events():
 
 
 asyncscheduler.add_job(my_async_task, IntervalTrigger(minutes=10), next_run_time=datetime.now())
-asyncscheduler.add_job(get_all_events, IntervalTrigger(minutes=5), next_run_time=datetime.now())
+asyncscheduler.add_job(scheduled_get_all_events, IntervalTrigger(minutes=5), next_run_time=datetime.now())
+
 
 
 
