@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  Start-or-Stop:
+  Initiate-Scambet-Instances:
     runs-on: ubuntu-latest
 
     steps:
@@ -35,9 +35,10 @@ jobs:
 
             echo "⚙️ Starting Instances with Id(s): $INSTANCE_IDS"
             echo "🖥️ Name(s): $INSTANCE_NAMES"
+
             aws ec2 start-instances --instance-ids $INSTANCE_IDS
-            
             echo "⏳ Waiting for instance(s) to be in 'ok' status..."
+
             aws ec2 wait instance-status-ok --instance-ids $INSTANCE_IDS
             echo "✅ Instance(s) are now running and ready."
 
@@ -65,7 +66,7 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > temp_ssh_key.pem
           chmod 600 temp_ssh_key.pem
 
-          ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -i temp_ssh_key.pem -o ConnectTimeout=30 -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
 
             cd /home/ubuntu
             cur_dir=$(pwd)

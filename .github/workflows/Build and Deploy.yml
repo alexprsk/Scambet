@@ -97,10 +97,11 @@
             echo "${{ secrets.EC2_SSH_KEY }}" > temp_ssh_key.pem
             chmod 600 temp_ssh_key.pem
 
-            ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            ssh -i temp_ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << EOF
+              echo "image version is: $GH_REPO:latest"
               sudo docker pull $GH_REPO:latest
-              sudo docker stop ubuntu-scambet-1 || true
-              sudo docker rm ubuntu-scambet-1 || true
+              sudo docker compose stop scambet || true
+              sudo docker compose rm -f scambet || true
               sudo docker compose up -d
               docker image prune --force
             EOF

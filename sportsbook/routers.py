@@ -94,6 +94,7 @@ asyncscheduler.add_job(scheduled_get_all_events, IntervalTrigger(minutes=5), nex
 
 
 
+
 def get_db():
     db = SessionLocal()
     try:

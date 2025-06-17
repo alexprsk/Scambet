@@ -19,7 +19,7 @@ on:
 
 
 jobs:
-  Start-or-Stop:
+  Check-or-Stop:
     runs-on: ubuntu-latest
     
     steps:
@@ -33,45 +33,57 @@ jobs:
           audience: sts.amazonaws.com
           
       - name: Check Scambet Instances
-        if: github.event.inputs.action == 'check'
+        if: github.event.inputs.action == 'Check'
         run: |
 
-          INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
-            | jq -r '.Reservations[].Instances[] | select(.State.Name == "stopped") | .InstanceId')
+          INSTANCE_JSON=$(aws ec2 describe-instances --region eu-central-1 --output json)
 
-          if [ -z "$INSTANCE_IDS" ]; then
-            echo "✅ Scambet is not up (no stopped instances)."
+
+          STOPPED_INSTANCE_IDS=$(echo "$INSTANCE_JSON" | jq -r '
+            .Reservations[].Instances[]
+            | select(.State.Name == "stopped")
+            | .InstanceId')
+
+          if [ -z "$STOPPED_INSTANCE_IDS" ]; then
+            echo "✅ Scambet is up (no stopped instances)."
           else
-            echo "🖥️ Found stopped instance(s): $INSTANCE_IDS"
-            
-            # Get the names of the stopped instances
-            INSTANCE_NAMES=$(aws ec2 describe-instances --region eu-central-1 --output json \
-              | jq -r '.Reservations[].Instances[] | select(.State.Name == "stopped") | .Tags[]? | select(.Key == "Name") | .Value')
+            echo "🖥️ Found stopped instance(s): $STOPPED_INSTANCE_IDS"
 
-            echo "🔍 Names of stopped instances: $INSTANCE_NAMES"
+
+            STOPPED_INSTANCE_NAMES=$(echo "$INSTANCE_JSON" | jq -r '
+              .Reservations[].Instances[]
+              | select(.State.Name == "stopped")
+              | [.Tags[]? | select(.Key == "Name") | .Value] | join(", ")')
+
+            echo "🔍 Names of stopped instances: $STOPPED_INSTANCE_NAMES"
           fi
 
 
       - name: Stop Scambet Instances
-        if: github.event.inputs.action == 'stop'
+        if: github.event.inputs.action == 'Stop'
         run: |
+        
+          INSTANCE_JSON=$(aws ec2 describe-instances --region eu-central-1 --output json)
 
-          INSTANCE_IDS=$(aws ec2 describe-instances --region eu-central-1 --output json \
-            | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .InstanceId')
+          INSTANCE_IDS=$(echo "$INSTANCE_JSON" | jq -r '
+            .Reservations[].Instances[]
+            | select(.State.Name == "running" or .State.Name == "pending")
+            | .InstanceId')
 
-          INSTANCE_NAMES=$(aws ec2 describe-instances --region eu-central-1 --output json \
-            | jq -r '.Reservations[].Instances[] | select(.State.Name == "running") | .Tags[]? | select(.Key == "Name") | .Value')
+          INSTANCE_NAMES=$(echo "$INSTANCE_JSON" | jq -r '
+            .Reservations[].Instances[]
+            | select(.State.Name == "running" or .State.Name == "pending")
+            | [.Tags[]? | select(.Key == "Name") | .Value] | join(", ")')
+
 
           if [ -z "$INSTANCE_IDS" ]; then
-
-            echo "✅ Scambet is already stopped. No running instances."
-
+            echo "✅ Scambet is already stopped. No running or pending instances."
           else
-
             echo "🛑 Stopping Instances with ID(s): $INSTANCE_IDS"
             echo "🖥️ Name(s): $INSTANCE_NAMES"
 
-            aws ec2 stop-instances --instance-ids $INSTANCE_IDS
-            echo "Instances Stopped"
+            aws ec2 stop-instances --region eu-central-1 --instance-ids $INSTANCE_IDS
+            aws ec2 wait instance-stopped --region eu-central-1 --instance-ids $INSTANCE_IDS
+            echo "✅ Instances fully stopped."
           fi
 
