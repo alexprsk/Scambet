@@ -97,7 +97,7 @@ async def get_all_events():
 
     return{
         "baseball" : baseball_events,
-        "american_football": american_football_events,
+        "americanfootball": american_football_events,
         "basketball" : basketball_events,
         "soccer": soccer_events,
         "tennis": tennis_events
