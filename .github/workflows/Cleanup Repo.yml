@@ -20,7 +20,6 @@ jobs:
       - name: Cleanup prd.scambet
         uses: dataaxiom/ghcr-cleanup-action@v1.0.16
         with:
-          dry-run: true
           token: ${{ secrets.CR_PAT_CLEANUP }}
           package: prd.scambet
           delete-tags: "scambet*"
@@ -29,7 +28,6 @@ jobs:
       - name: Cleanup stg.scambet
         uses: dataaxiom/ghcr-cleanup-action@v1.0.16
         with:
-          dry-run: true
           token: ${{ secrets.CR_PAT_CLEANUP }}
           package: stg.scambet
           delete-tags: "scambet*"
@@ -38,7 +36,6 @@ jobs:
       - name: Cleanup scambet
         uses: dataaxiom/ghcr-cleanup-action@v1.0.16
         with:
-          dry-run: true
           token: ${{ secrets.CR_PAT_CLEANUP }}
           package: scambet
           delete-tags: "scambet*"
