@@ -22,3 +22,5 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@v1.0.16
         with:
           dry-run: true
+          token: ${{ secrets.CR_PAT }}
+          keep-n-untagged: 3
