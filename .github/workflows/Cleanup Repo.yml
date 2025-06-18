@@ -2,8 +2,9 @@ name: Cleanup GitHub Registry Repo
 
 permissions:
   packages: write
+  contents: read
 
-run-name: "Action: from branch ${{ github.ref_name }} by @${{ github.actor }}"
+run-name: "Cleanup GitHub Registry Repo by @${{ github.actor }}"
 
 on:
   workflow_dispatch:
