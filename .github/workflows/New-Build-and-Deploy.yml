@@ -18,7 +18,7 @@
         - 'master'
 
   jobs:
-    docker:
+    build-and-push:
       runs-on: ubuntu-latest
       steps:
 
@@ -108,7 +108,7 @@
             EOF
             
         - name: Revoke Runner IP Address
-          if: always()  # Ensures this runs even if previous steps fail
+          if: always()  
           run: |
             aws ec2 revoke-security-group-ingress \
               --group-id ${{ secrets.AWS_SG_GROUP_ID }} \
