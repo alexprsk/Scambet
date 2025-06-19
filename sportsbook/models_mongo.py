@@ -12,7 +12,6 @@ class BetStatus(str, Enum):
     voided="VOIDED"
 
 class PostRequest(Document):
-    userId: str
     stake: float
     selections: Optional[List[dict]]
     status: BetStatus
@@ -34,7 +33,7 @@ class Post(Document):
         collection_name='posts'
 
 class Bets(Document):
-    id: Optional[PydanticObjectId] = Field(alias="_id", default=None)
+    
     userId: str
     stake: float
     status: BetStatus

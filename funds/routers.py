@@ -90,27 +90,9 @@ def get_funds(db: db_dependency, user_id: int) -> float:
 
 
 @router.get('/', status_code=status.HTTP_200_OK)
-async def get_user_funds(db: db_dependency,  request: Request):
+async def get_user_funds(db: db_dependency,  current_user: user_dependency):
     
-    token = request.cookies.get("access_token")
-
-    
-    if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
-    
-    user = get_current_user(token)
-
-    
-    
-    user_data = db.exec(select(Users).where(Users.id == user['user_id'])).first()
-    
-    if not user_data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    return {'user_balance': user_data.balance}
+    return {'user_balance': current_user.balance}
 
 
 

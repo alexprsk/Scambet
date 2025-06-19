@@ -23,9 +23,9 @@ from sqlmodel import Session, select, update, insert, values
 
 
 from auth.models import Users
-from auth.routers import TOKEN_BLACKLIST
+from auth.routers import TOKEN_BLACKLIST, get_user, get_current_user
 from funds.models import Funds
-from funds.routers import get_funds
+from funds.routers import get_user_funds
 from sportsbook.models_mongo import Bet, PostRequest, Post, Bets
 from sportsbook.utils import insert_events_from_api
 from sportsbook.scripts.prelive_endpoints import get_all_events
@@ -56,43 +56,12 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
-
-def get_user(db: db_dependency, username: str):
-
-    user = db.exec(select(Users).where(Users.username == username)).first()
-
-    if user:
-        return user
-
-def get_current_user(db:db_dependency, token : Annotated[str, Depends(oauth2_bearer)]):
-
-    try:
-
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        print(payload)
-        username = payload.get('sub')
-        user_id = payload.get('id')
-        
-
-        if token in TOKEN_BLACKLIST:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
-        
-        if username is None or user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
-        user = get_user(db, username)
-        return user
-
-    
-    except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
-    
-
-user_dependency = Annotated[Users, Depends(get_current_user)]
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 inserted = []
 cached_events = {}
     
-async def my_async_task():
+async def scheduled_job_get_odds():
     print(f"Async Task is running at {datetime.now()}")
     global inserted
     print(f"globalinserted: {inserted}")
@@ -127,8 +96,7 @@ async def my_async_task():
     }
 
 
-
-async def scheduled_get_all_events():
+async def scheduled_job_get_all_events():
     global cached_events
     cached_events = await get_all_events()
     print(cached_events)
@@ -136,44 +104,9 @@ async def scheduled_get_all_events():
 
 
 
-asyncscheduler.add_job(my_async_task, IntervalTrigger(minutes=10), next_run_time=datetime.now())
-asyncscheduler.add_job(scheduled_get_all_events, IntervalTrigger(minutes=5), next_run_time=datetime.now())
+asyncscheduler.add_job(scheduled_job_get_odds, IntervalTrigger(minutes=10), next_run_time=datetime.now())
+asyncscheduler.add_job(scheduled_job_get_all_events, IntervalTrigger(minutes=5), next_run_time=datetime.now())
 
-
-
-
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
-
-
-def get_user(db: db_dependency, username: str):
-
-    user = db.exec(select(Users).where(Users.username == username)).first()
-
-    if user:
-        return user
-
-def get_current_user(db:db_dependency, token : Annotated[str, Depends(oauth2_bearer)]):
-
-    try:
-
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        print(payload)
-        username = payload.get('sub')
-        user_id = payload.get('id')
-        
-
-        if token in TOKEN_BLACKLIST:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
-        
-        if username is None or user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
-        user = get_user(db, username)
-        return user
-
-    
-    except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
-    
 
 
 
@@ -238,7 +171,6 @@ async def get_events_by_sport(sport: str = Query(description="soccer_england_lea
 
 
 
-
 @router.get('/odds', status_code=status.HTTP_200_OK)
 async def get_upcoming_events_with_odds():
     start_time = time.perf_counter()
@@ -251,26 +183,34 @@ async def get_upcoming_events_with_odds():
         "events": inserted
     }
 
+
+
+
 @router.get('/events', status_code=status.HTTP_200_OK)
 async def get_all_events_from_api():
     start_time = time.perf_counter()
     
         
     end_time = time.perf_counter()
+    total= end_time - start_time
+    print(f"Total Duration: {round(end_time - start_time, 2)}")
 
     return {
-
+        
         "events": cached_events
     }
 
 
+
+
 @router.post('/place_bet', status_code=status.HTTP_201_CREATED, response_model=Bets)
-async def place_bet(request: PostRequest, db: db_dependency, current_user: user_dependency  
-):
+async def place_bet(request: PostRequest, db: db_dependency, current_user: user_dependency):
+
 
     user_id = current_user.id
+    print(user_id)
 
-    balance = await run_in_threadpool(get_funds, db, user_id)
+    balance = current_user.balance
 
     if request.stake > balance:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient funds")
@@ -285,7 +225,7 @@ async def place_bet(request: PostRequest, db: db_dependency, current_user: user_
         new_balance=new_balance,
         change_amount=-request.stake,  
         transaction_id=uuid4(),
-        reason='withdrawal'
+        reason='bet_placement'
     )
     db.add(new_funds)
     db.commit()
@@ -310,6 +250,8 @@ async def open_bets():
     return posts
 
 
+
+
 @router.get('/open_bets', status_code=status.HTTP_200_OK)
 async def user_open_bets(db: db_dependency, current_user: user_dependency):
     try:
@@ -319,7 +261,7 @@ async def user_open_bets(db: db_dependency, current_user: user_dependency):
                 detail="Invalid user credentials"
             )
 
-        user_id = str(current_user.id)  # Ensure string format matches how you store it
+        user_id = str(current_user.id)  
         bets = await Bets.find(Bets.userId == user_id).to_list()
         return bets
 
@@ -328,15 +270,3 @@ async def user_open_bets(db: db_dependency, current_user: user_dependency):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
-
-
-
-@router.get('/test/{bet_id}', status_code=status.HTTP_201_CREATED, response_model=Bets)
-async def place_bet(bet_id: str):
-
-    post = await Bets.get(bet_id)
-    if not post or post is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bet not Found")
-    return post
-
-
