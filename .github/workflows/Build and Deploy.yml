@@ -7,10 +7,6 @@
   run-name: Build Backend and Deploy from branch ${{ github.ref_name }} by @${{ github.actor }}
 
   on:
-    push:
-      branches:
-        - master
-        - staging
     workflow_dispatch:
 
   jobs:
