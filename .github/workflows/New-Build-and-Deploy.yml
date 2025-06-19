@@ -116,7 +116,6 @@
               --port 22 \
               --cidr ${{ steps.ip.outputs.ipv4 }}/32            
 
-        
 
         - name: Cleanup SSH key
           run: rm -f temp_ssh_key.pem
