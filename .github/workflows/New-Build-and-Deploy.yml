@@ -56,13 +56,14 @@
             context: .
             push: ${{ github.event_name == 'push' }}
             tags: ${{ steps.meta.outputs.tags }}
-            labels: ${{ steps.meta.outputs.labels }}
 
 
-        - name: Export GH_REPO for the Next Job
+
+        - name: Export GH_REPO and tag for the Next Job
           id: export_repo
           run: |
             echo "gh_repo=$GH_REPO" >> $GITHUB_OUTPUT
+            echo "${{steps.meta.outputs.tags }}" >> $GITHUB_OUTPUT
 
     Deploy-New-Be-Version:
       runs-on: ubuntu-latest
@@ -127,6 +128,8 @@
             RUN_NUMBER: ${{ github.run_number }}
             GH_REPO: ${{ needs.build-and-push.outputs.gh_repo }}
             GITHUB_SHA: ${{ github.sha }}
+            GITHUB_TAG: ${{ needs.build-and-push.outputs.tag }}
+
           run: |
             {
               echo "### 🚀 Frontend Deployment Summary"
@@ -139,8 +142,7 @@
               echo "### 📦 Docker Image Details"
               echo "- **Repository:** \`${GH_REPO}\`"
               echo "- **Tags:**"
-              echo "  - \`latest\` (for deployment)"
-              echo "  - \`${GITHUB_SHA}\` (immutable commit reference)"
+              echo "  - \`${GITHUB_TAG}\` "
               echo ""
               echo "### 🧱 Build & Deploy Steps"
               echo "1. ✅ Code checkout"
