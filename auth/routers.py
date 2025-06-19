@@ -18,6 +18,7 @@ from funds.models import Funds
 from auth.schemas import CreateUserRequest, Token
 from funds.schemas import DepositRequest, WithdrawRequest
 
+load_dotenv("prod.env")
 
 router = APIRouter(
     prefix='/auth',
@@ -41,8 +42,8 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-SECRET_KEY = '939a99c39bf3dc73316bb5fd52c2195a596485c21cdb7cce1151c1a41dde32df'
-ALGORITHM = 'HS256'
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
