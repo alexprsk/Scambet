@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query, Body
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.concurrency import run_in_threadpool
+
 
 from apscheduler.schedulers.background import BackgroundScheduler  
 from apscheduler.triggers.interval import IntervalTrigger 
@@ -7,6 +9,7 @@ from database import SessionLocal
 from datetime import datetime, timezone
 from jose import jwt, JWTError
 from sqlmodel import Session
+from uuid import uuid4
 from typing import Annotated, List
 from dotenv import load_dotenv
 
@@ -20,27 +23,71 @@ from sqlmodel import Session, select, update, insert, values
 
 
 from auth.models import Users
-from auth.routers import TOKEN_BLACKLIST, ALGORITHM, SECRET_KEY
+from auth.routers import TOKEN_BLACKLIST
+from funds.models import Funds
+from funds.routers import get_funds
 from sportsbook.models_mongo import Bet, PostRequest, Post, Bets
 from sportsbook.utils import insert_events_from_api
 from sportsbook.scripts.prelive_endpoints import get_all_events
 
 from sportsbook.schemas import Bet
-from utilities.random_odds import random_odds_generator
 
 router = APIRouter(
     prefix= "/sportsbook",
      tags=['sportsbook']
 )
 
-load_dotenv()
+load_dotenv("prod.env")
 
 odds_api_key=os.getenv("ODDS_API_KEY")
-
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 
 #-----------------------------------------#
 #--------------- FUNCTIONS ---------------#
 #-----------------------------------------#
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+db_dependency = Annotated[Session, Depends(get_db)]
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
+
+def get_user(db: db_dependency, username: str):
+
+    user = db.exec(select(Users).where(Users.username == username)).first()
+
+    if user:
+        return user
+
+def get_current_user(db:db_dependency, token : Annotated[str, Depends(oauth2_bearer)]):
+
+    try:
+
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print(payload)
+        username = payload.get('sub')
+        user_id = payload.get('id')
+        
+
+        if token in TOKEN_BLACKLIST:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
+        
+        if username is None or user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
+        user = get_user(db, username)
+        return user
+
+    
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
+    
+
+user_dependency = Annotated[Users, Depends(get_current_user)]
 
 inserted = []
 cached_events = {}
@@ -95,14 +142,6 @@ asyncscheduler.add_job(scheduled_get_all_events, IntervalTrigger(minutes=5), nex
 
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-db_dependency = Annotated[Session, Depends(get_db)]
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
 
@@ -136,7 +175,7 @@ def get_current_user(db:db_dependency, token : Annotated[str, Depends(oauth2_bea
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
     
 
-user_dependency = Annotated[dict, Depends(get_current_user)]
+
 
 def api_key_check(odds_api_key, url):
         
@@ -226,19 +265,41 @@ async def get_all_events_from_api():
 
 
 @router.post('/place_bet', status_code=status.HTTP_201_CREATED, response_model=Bets)
-async def place_bet(request: PostRequest):
+async def place_bet(request: PostRequest, db: db_dependency, current_user: user_dependency  
+):
 
+    user_id = current_user.id
 
-    post = Bets(userId=request.userId,
-                stake=request.stake,
-                status=request.status,
-                selections=request.selections)
+    balance = await run_in_threadpool(get_funds, db, user_id)
 
-    print("Incoming request data:", post)
-    print("Saving post...")
+    if request.stake > balance:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient funds")
+
+    new_balance = balance - request.stake
+
+    db.exec(update(Users).where(Users.id == user_id).values(balance=new_balance))
+
+    new_funds = Funds(
+        player_id=user_id,
+        previous_balance=balance,
+        new_balance=new_balance,
+        change_amount=-request.stake,  
+        transaction_id=uuid4(),
+        reason='withdrawal'
+    )
+    db.add(new_funds)
+    db.commit()
+
+    post = Bets(
+        userId=str(user_id),
+        stake=request.stake,
+        status=request.status,
+        selections=request.selections
+    )
+
     await post.insert()
-    print("Post saved.")
     return post
+
 
 
 

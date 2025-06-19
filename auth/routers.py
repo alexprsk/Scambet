@@ -140,7 +140,7 @@ async def sign_up(db: db_dependency, request: CreateUserRequest):
         last_name = request.last_name,
         hashed_password = pbkdf2_sha256.hash(request.password),
         phone_number = request.phone_number,
-        balance = 0,
+        balance = 100,
         role = 'user',
         is_active = True
     )
