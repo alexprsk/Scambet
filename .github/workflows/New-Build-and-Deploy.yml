@@ -62,8 +62,13 @@
         - name: Export GH_REPO and tag for the Next Job
           id: export_repo
           run: |
-            echo "gh_repo=$GH_REPO" >> $GITHUB_OUTPUT
-            echo "tags=${{ steps.meta.outputs.tags }}" >> $GITHUB_OUTPUT
+            gh_repo="${{ steps.meta.outputs.images }}"
+            tags="${{ steps.meta.outputs.tags }}"
+
+            tag=$(echo "$tags" | tr ',' '\n' | grep -v latest | head -n1 | cut -d ':' -f2)
+
+            echo "gh_repo=$gh_repo" >> $GITHUB_OUTPUT
+            echo "tag=$tag" >> $GITHUB_OUTPUT
 
     Deploy-New-Be-Version:
       runs-on: ubuntu-latest
@@ -127,7 +132,6 @@
             TRIGGERED_BY: ${{ github.actor }}
             RUN_NUMBER: ${{ github.run_number }}
             GH_REPO: ${{ needs.build-and-push.outputs.gh_repo }}
-            GITHUB_SHA: ${{ github.sha }}
             GITHUB_TAG: ${{ needs.build-and-push.outputs.tag }}
 
           run: |
