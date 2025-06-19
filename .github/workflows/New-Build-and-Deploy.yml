@@ -63,7 +63,7 @@
           id: export_repo
           run: |
             echo "gh_repo=$GH_REPO" >> $GITHUB_OUTPUT
-            echo "${{steps.meta.outputs.tags }}" >> $GITHUB_OUTPUT
+            echo "tags=${{ steps.meta.outputs.tags }}" >> $GITHUB_OUTPUT
 
     Deploy-New-Be-Version:
       runs-on: ubuntu-latest
