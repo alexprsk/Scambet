@@ -1,8 +1,12 @@
 services:
   scambet:
-    image: ghcr.io/alexprsk/prd.scambet:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     ports:
       - "8000:8000"
+    volumes:
+        - .:/app      
     env_file:
       - prod.env
 
@@ -42,6 +46,7 @@ services:
 volumes:
   mongodb_data:
   postgres_data:
+
 
 
 

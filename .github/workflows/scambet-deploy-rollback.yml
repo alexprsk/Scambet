@@ -26,7 +26,7 @@ env:
     SCRIPT_PATH: "./workflow_scripts/scambet-deploy-rollback.sh"
 
 jobs:
-  Start-or-Stop:
+  Deploy-to-Production:
     runs-on: ubuntu-latest
 
     steps:
@@ -103,17 +103,12 @@ jobs:
         run: rm -f temp_ssh_key.pem
 
       - name: Deployment Summary 📋
+        env:
+          GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
         run: |
-          echo ""
-          echo "================ Deployment Summary ================"
-          echo "| Step                       | Description                                    |"
-          echo "|----------------------------|------------------------------------------------|"
-          echo "| 🔑 Configure AWS Credentials | Set AWS permissions and assume role           |"
-          echo "| ✅ Check EC2 Instance       | Verify EC2 instance is running before deploy  |"
-          echo "| 🌐 Get Runner Public IP     | Retrieve current runner's public IP           |"
-          echo "| 🔒 Whitelist Runner IP      | Allow SSH from runner IP in EC2 security group|"
-          echo "| 🐳 Upload Image & Reload    | Pull image, update compose file, restart svc  |"
-          echo "| 🔓 Revoke Runner IP         | Remove runner IP from security group after job|"
-          echo "| 🧹 Cleanup SSH Key          | Delete temporary SSH key file                  |"
-          echo "=================================================="
-          echo ""
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔑 AWS Credentials configured" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ EC2 Instance checked" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌐 Runner public IP whitelisted and revoked" >> $GITHUB_STEP_SUMMARY
+          echo "- 🐳 Docker container uploaded and reloaded" >> $GITHUB_STEP_SUMMARY
+          echo "- 🧹 Temporary SSH key cleaned up" >> $GITHUB_STEP_SUMMARY
