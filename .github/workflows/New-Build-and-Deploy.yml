@@ -67,7 +67,11 @@
 
             tag=$(echo "$tags" | tr ',' '\n' | grep -v latest | head -n1 | cut -d ':' -f2)
 
-            echo "gh_repo=$gh_repo" >> $GITHUB_OUTPUT
+            # Use multi-line output format for gh_repo (safe for colons)
+            echo "gh_repo<<EOF" >> $GITHUB_OUTPUT
+            echo "$gh_repo" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
             echo "tag=$tag" >> $GITHUB_OUTPUT
 
     Deploy-New-Be-Version:
