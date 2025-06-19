@@ -168,8 +168,3 @@
               echo "---"
               echo "_Generated on $(date -u) UTC_"
             } >> $GITHUB_STEP_SUMMARY
-  
-                echo ""
-                echo "---"
-                echo "_Generated on $(date -u) UTC_"
-              } >> $GITHUB_STEP_SUMMARY
