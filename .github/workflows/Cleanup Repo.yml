@@ -9,7 +9,7 @@ run-name: "Cleanup GitHub Registry Repo by @${{ github.actor }}"
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 5'
+    - cron: '0 0 * * *'
 
 jobs:
   cleanup-container-registry:
@@ -24,7 +24,7 @@ jobs:
           package: prd.scambet
           delete-tags: "scambet*"
           keep-n-untagged: 0
-          keep-n-tagged: 2
+          keep-n-tagged: 3
 
       - name: Cleanup stg.scambet
         uses: dataaxiom/ghcr-cleanup-action@v1.0.16
@@ -33,7 +33,7 @@ jobs:
           package: stg.scambet
           delete-tags: "scambet*"
           keep-n-untagged: 0
-          keep-n-tagged: 2
+          keep-n-tagged: 3
 
       - name: Cleanup scambet
         uses: dataaxiom/ghcr-cleanup-action@v1.0.16
@@ -42,4 +42,4 @@ jobs:
           package: scambet
           delete-tags: "scambet*"
           keep-n-untagged: 0
-          keep-n-tagged: 2
+          keep-n-tagged: 3
