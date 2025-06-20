@@ -22,7 +22,7 @@ jobs:
         with:
           token: ${{ secrets.CR_PAT_CLEANUP }}
           package: prd.scambet
-          delete-tags: "scambet*"
+          delete-tags: "*"
           keep-n-untagged: 0
           keep-n-tagged: 2
 
@@ -31,7 +31,7 @@ jobs:
         with:
           token: ${{ secrets.CR_PAT_CLEANUP }}
           package: stg.scambet
-          delete-tags: "scambet*"
+          delete-tags: "*"
           keep-n-untagged: 0
           keep-n-tagged: 2
 
@@ -40,6 +40,6 @@ jobs:
         with:
           token: ${{ secrets.CR_PAT_CLEANUP }}
           package: scambet
-          delete-tags: "scambet*"
+          delete-tags: "*"
           keep-n-untagged: 0
           keep-n-tagged: 2
