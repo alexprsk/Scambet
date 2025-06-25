@@ -4,7 +4,7 @@ from sqlalchemy.exc import OperationalError
 from dotenv import load_dotenv
 import os
 
-load_dotenv(".env")
+load_dotenv("prod.env")
 
 SQLALCHEMY_DATABASE_URL = os.getenv("SQLALCHEMY_DATABASE_URL")
 
