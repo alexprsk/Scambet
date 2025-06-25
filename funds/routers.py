@@ -89,7 +89,7 @@ def get_funds(db: db_dependency, user_id: int) -> float:
 
 
 
-@router.get('/', status_code=status.HTTP_200_OK)
+@router.get('/refresh_balance', status_code=status.HTTP_200_OK)
 async def get_user_funds(db: db_dependency,  current_user: user_dependency):
     
     return {'user_balance': current_user.balance}
