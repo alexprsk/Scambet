@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
     mongo_client = AsyncIOMotorClient(MONGO_URI)
     await init_beanie(
         database=mongo_client[MONGO_DB_NAME], 
-        document_models=[Bets, PostRequest, Post, Event]  # Add all your Beanie models here
+        document_models=[Bets, PostRequest, Post, Event]  #  Beanie models
     )
     print("MongoDB initialized")
     scheduler.start()
@@ -53,7 +53,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 origins = [
-    "http://localhost:5173",  # Dev
+    "http://localhost:5173",  
     "http://localhost",       # Nginx frontend
     "http://scambetfront",    # Internal Docker name 
     "https://scambet.com"
@@ -62,9 +62,9 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,  # if you are handling cookies or auth headers
-    allow_methods=["*"],     # or specify specific methods, e.g., ["GET", "POST"]
-    allow_headers=["*"],     # or specify specific headers
+    allow_credentials=True,  # for handling cookies or auth headers
+    allow_methods=["*"],     # e.g., ["GET", "POST"]
+    allow_headers=["*"],     #   specific headers
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
